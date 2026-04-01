@@ -1,0 +1,237 @@
+/**
+ * Google Drive Sync Engine
+ * Handles OAuth2 authentication and JSON file persistence on Drive.
+ */
+
+const SYNC_CONFIG = {
+    CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID_HERE', // User needs to provide this
+    SCOPES: 'https://www.googleapis.com/auth/drive.file',
+    DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
+    FILE_NAME: 'pos_backup_yc.json'
+};
+
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
+let isAuthenticating = false; // Prevent double auth prompts
+
+// 1. Initialize API & Identity
+function gapiLoaded() {
+    gapi.load('client', async () => {
+        await gapi.client.init({
+            discoveryDocs: [SYNC_CONFIG.DISCOVERY_DOC],
+        });
+        gapiInited = true;
+        checkSyncStatus();
+    });
+}
+
+function gisLoaded() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: SYNC_CONFIG.CLIENT_ID,
+        scope: SYNC_CONFIG.SCOPES,
+        callback: '', // defined at runtime
+    });
+    gisInited = true;
+    checkSyncStatus();
+}
+
+function checkSyncStatus() {
+    if (gapiInited && gisInited) {
+        // Automatically try to get a token if we had one before
+        const token = gapi.client.getToken();
+        if (token) {
+            updateSyncUI('connected');
+        } else {
+            // Try silent login if we've already authorized in this session
+            try {
+                autoSync();
+            } catch(e) {}
+        }
+    }
+}
+
+// Ensure scripts are loaded
+window.onload = () => {
+    if (typeof gapi !== 'undefined') gapiLoaded();
+    if (typeof google !== 'undefined') gisLoaded();
+    
+    // Add online listener for auto-sync
+    window.addEventListener('online', () => {
+        console.log('Back online. Syncing...');
+        autoSync();
+    });
+};
+
+// 2. Auth Flow
+async function handleSyncAuth() {
+    if (SYNC_CONFIG.CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
+        alert('براہ کرم گوگل کلاؤڈ کنسول سے اپنی Client ID حاصل کریں اور کوڈ میں درج کریں۔');
+        return;
+    }
+
+    tokenClient.callback = async (resp) => {
+        if (resp.error !== undefined) throw (resp);
+        updateSyncUI('connected');
+        await performFullSync();
+    };
+
+    if (gapi.client.getToken() === null) {
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+    } else {
+        tokenClient.requestAccessToken({ prompt: '' });
+    }
+}
+
+function updateSyncUI(state) {
+    const btn = document.getElementById('sync-btn');
+    const status = document.getElementById('sync-status');
+    const iconBg = document.getElementById('sync-icon-bg');
+    const icon = document.getElementById('sync-icon');
+
+    if (state === 'connected') {
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">sync</span> اپ ڈیٹ کریں`;
+        status.innerText = 'منسلک اور محفوظ';
+        status.classList.replace('text-slate-500', 'text-emerald-400');
+        iconBg.classList.replace('bg-slate-700', 'bg-emerald-500/20');
+        icon.classList.replace('text-slate-400', 'text-emerald-400');
+        icon.innerText = 'cloud_done';
+    } else if (state === 'syncing') {
+        status.innerText = 'سنک ہو رہا ہے...';
+        icon.classList.add('animate-spin');
+    }
+}
+
+// 3. Drive Operations
+async function restoreFromDrive() {
+    if (!gapi.client || !gapi.client.getToken()) {
+        alert('پہلے گوگل اکاؤنٹ منسلک کریں!');
+        return;
+    }
+
+    if (!confirm('کیا آپ کلاؤڈ سے ڈیٹا ری سٹور کرنا چاہتے ہیں؟ موجودہ لوکل ڈیٹا مٹ جائے گا!')) return;
+
+    updateSyncUI('syncing');
+
+    try {
+        const response = await gapi.client.drive.files.list({
+            q: `name = '${SYNC_CONFIG.FILE_NAME}' and trashed = false`,
+            fields: 'files(id, name)',
+        });
+        const files = response.result.files;
+
+        if (files && files.length > 0) {
+            const fileId = files[0].id;
+            const fileResp = await gapi.client.drive.files.get({
+                fileId: fileId,
+                alt: 'media'
+            });
+            
+            const cloudData = fileResp.result;
+            
+            // Apply to localStorage
+            if (cloudData.inventory) localStorage.setItem('yc_inventory', JSON.stringify(cloudData.inventory));
+            if (cloudData.sales) localStorage.setItem('yc_sales', JSON.stringify(cloudData.sales));
+            if (cloudData.khata) localStorage.setItem('yc_khata', JSON.stringify(cloudData.khata));
+            if (cloudData.suppliers) localStorage.setItem('yc_suppliers', JSON.stringify(cloudData.suppliers));
+            if (cloudData.categories) localStorage.setItem('yc_categories', JSON.stringify(cloudData.categories));
+            if (cloudData.profile) localStorage.setItem('yc_profile', JSON.stringify(cloudData.profile));
+            if (cloudData.expenses) localStorage.setItem('yc_expenses', JSON.stringify(cloudData.expenses));
+
+            alert('ڈیٹا کامیابی سے ری سٹور ہو گیا ہے! پیج ری لوڈ ہو رہا ہے...');
+            location.reload();
+        } else {
+            alert('کلاؤڈ پر کوئی بیک اپ موجود نہیں ہے!');
+        }
+    } catch (err) {
+        console.error('Restore failed', err);
+        alert('ڈیٹا ری سٹور کرنے میں خرابی پیش آئی!');
+    } finally {
+        updateSyncUI('connected');
+    }
+}
+
+async function performFullSync() {
+    updateSyncUI('syncing');
+    
+    // Get local data
+    const localData = {
+        inventory: AppData.getInventory(),
+        sales: AppData.getSales(),
+        khata: AppData.getKhata(),
+        suppliers: AppData.getSuppliers(),
+        categories: AppData.getCategories(),
+        profile: AppData.getProfile(),
+        expenses: AppData.getExpenses(),
+        timestamp: Date.now()
+    };
+
+    try {
+        // Search for existing backup file
+        const response = await gapi.client.drive.files.list({
+            q: `name = '${SYNC_CONFIG.FILE_NAME}' and trashed = false`,
+            fields: 'files(id, name)',
+        });
+        const files = response.result.files;
+
+        if (files && files.length > 0) {
+            const fileId = files[0].id;
+            // Update existing
+            await gapi.client.request({
+                path: `/upload/drive/v3/files/${fileId}`,
+                method: 'PATCH',
+                params: { uploadType: 'media' },
+                body: JSON.stringify(localData)
+            });
+        } else {
+            // Create new
+            const metadata = {
+                name: SYNC_CONFIG.FILE_NAME,
+                mimeType: 'application/json',
+            };
+            const file = new Blob([JSON.stringify(localData)], { type: 'application/json' });
+            
+            // Multipart upload logic simplified
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', file);
+
+            await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST',
+                headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
+                body: form
+            });
+        }
+        
+        updateSyncUI('connected');
+        localStorage.setItem('yc_last_sync', Date.now());
+    } catch (err) {
+        console.error('Sync failed', err);
+        alert('سنکنگ میں خرابی پیش آئی!');
+    }
+}
+
+// Auto-sync function to be called from data.js
+async function autoSync() {
+    if (!gapi.client || !gisInited) return;
+
+    const currentToken = gapi.client.getToken();
+    
+    if (currentToken) {
+        await performFullSync();
+    } else if (!isAuthenticating) {
+        // Try to get token without prompt (silent)
+        isAuthenticating = true;
+        try {
+            tokenClient.callback = async (resp) => {
+                isAuthenticating = false;
+                if (resp.error !== undefined) return;
+                updateSyncUI('connected');
+                await performFullSync();
+            };
+            tokenClient.requestAccessToken({ prompt: '' });
+        } catch (err) {
+            isAuthenticating = false;
+        }
+    }
+}

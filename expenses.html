@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>یوشع کراکری - اخراجات</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#fbbf24">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
+    <style>
+        body { font-family: 'Noto Nastaliq Urdu', serif; background-color: #0f172a; }
+        .urdu-font { font-family: 'Noto Nastaliq Urdu', serif; }
+        .english-font { font-family: 'Manrope', sans-serif; }
+        .glass-effect { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        main { max-width: 480px; margin-left: auto; margin-right: auto; }
+        .bottom-nav { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    </style>
+</head>
+<body class="text-slate-100 pb-24">
+
+    <!-- Top Bar -->
+    <header class="fixed top-0 inset-x-0 z-50 glass-effect p-4 flex justify-between items-center px-6">
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="p-2 hover:bg-slate-800 rounded-full transition-all text-slate-400">
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+            <h1 id="store-name-display" class="text-xl font-bold text-white urdu-font">اخراجات</h1>
+        </div>
+        <button onclick="showAddModal()" class="bg-rose-500 text-white p-2 rounded-xl shadow-lg shadow-rose-500/20 hover:scale-105 transition-transform flex items-center justify-center">
+            <span class="material-symbols-outlined font-bold">add</span>
+        </button>
+    </header>
+
+    <main class="mt-24 px-4 space-y-6">
+
+        <!-- Expense Summary Card -->
+        <section class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-[2.5rem] text-white flex flex-col justify-between min-h-[160px] shadow-2xl relative overflow-hidden border border-slate-700/50">
+            <div class="relative z-10">
+                <p class="text-slate-400 text-sm mb-1 urdu-font">کل اخراجات (اس ماہ)</p>
+                <h2 id="total-expenses" class="text-4xl font-bold english-font leading-tight text-rose-400">Rs. 0</h2>
+            </div>
+            <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl"></div>
+        </section>
+
+        <!-- Expense List -->
+        <section class="space-y-4 urdu-font pb-12">
+            <h3 class="text-lg font-bold px-2 text-slate-200">حالیہ اخراجات</h3>
+            <div id="expense-list" class="space-y-3">
+                <!-- Dynamic Content -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Add Expense Modal -->
+    <div id="expense-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 animate-in slide-in-from-bottom duration-300">
+            <div class="flex justify-between items-center mb-6 urdu-font">
+                <h3 class="text-lg font-bold text-white">نیا خرچہ شامل کریں</h3>
+                <button onclick="hideAddModal()" class="text-slate-500 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <form onsubmit="saveExpense(event)" class="space-y-4 urdu-font">
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">تفصیل</label>
+                    <input type="text" id="exp-title" required placeholder="مثلاً: دکان کا کرایہ، بجلی بل..." class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-rose-400/50">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">رقم (Rs.)</label>
+                    <input type="number" id="exp-amount" required placeholder="0" class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-rose-400/50 english-font" dir="ltr">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">کیٹیگری</label>
+                    <select id="exp-category" class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-rose-400/50">
+                        <option value="Rent">کرایہ (Rent)</option>
+                        <option value="Electricity">بجلی بل (Utility)</option>
+                        <option value="Salary">تنخواہ (Salary)</option>
+                        <option value="Other">دیگر (Other)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-rose-500 text-white py-4 rounded-2xl font-bold mt-4 hover:scale-[1.02] transition-all">محفوظ کریں</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 inset-x-0 bottom-nav h-20 flex justify-around items-center px-6 z-50 rounded-t-3xl urdu-font">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="text-[8px] font-bold">ڈیش بورڈ</span>
+        </a>
+        <a href="inventory.html" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <span class="text-[8px] font-bold">اسٹاک</span>
+        </a>
+        <a href="pos.html" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">shopping_cart</span>
+            <span class="text-[8px] font-bold">سیلز</span>
+        </a>
+        <a href="expenses.html" class="flex flex-col items-center gap-1 text-rose-400">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+            <span class="text-[8px] font-bold">اخراجات</span>
+        </a>
+        <a href="khata.html" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">menu_book</span>
+            <span class="text-[8px] font-bold">ادھار</span>
+        </a>
+    </nav>
+
+    <script src="data.js"></script>
+    <script src="sync.js"></script>
+    <script>
+        function updateStoreName() {
+            const profile = AppData.getProfile();
+            if (profile && profile.name) {
+                document.getElementById('store-name-display').innerText = profile.name + " - اخراجات";
+            }
+        }
+
+        function renderExpenses() {
+            const expenses = AppData.getExpenses();
+            const list = document.getElementById('expense-list');
+            const totalDisplay = document.getElementById('total-expenses');
+            
+            const total = expenses.reduce((acc, e) => acc + parseFloat(e.amount), 0);
+            totalDisplay.innerText = `Rs. ${total.toLocaleString()}`;
+
+            if (expenses.length === 0) {
+                list.innerHTML = '<div class="text-center py-12 text-slate-600 text-xs italic">کوئی خرچہ ریکارڈ نہیں ہوا...</div>';
+                return;
+            }
+
+            list.innerHTML = expenses.reverse().map(e => `
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 flex items-center justify-between group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-400">
+                            <span class="material-symbols-outlined text-sm">${getIcon(e.category)}</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-200">${e.title}</h4>
+                            <p class="text-[10px] text-slate-500 italic">${e.date} • ${e.category}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="english-font font-bold text-rose-400">Rs. ${parseFloat(e.amount).toLocaleString()}</span>
+                        <button onclick="removeExpense(${e.id})" class="text-slate-600 hover:text-rose-500 transition-colors">
+                            <span class="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getIcon(cat) {
+            switch(cat) {
+                case 'Rent': return 'home';
+                case 'Electricity': return 'lightbulb';
+                case 'Salary': return 'badge';
+                default: return 'receipt_long';
+            }
+        }
+
+        function showAddModal() { document.getElementById('expense-modal').classList.remove('hidden'); }
+        function hideAddModal() { document.getElementById('expense-modal').classList.add('hidden'); }
+
+        function saveExpense(e) {
+            e.preventDefault();
+            const expense = {
+                title: document.getElementById('exp-title').value,
+                amount: document.getElementById('exp-amount').value,
+                category: document.getElementById('exp-category').value
+            };
+            AppData.addExpense(expense);
+            hideAddModal();
+            renderExpenses();
+        }
+
+        function removeExpense(id) {
+            if (confirm('کیا آپ یہ خرچہ ختم کرنا چاہتے ہیں؟')) {
+                AppData.deleteExpense(id);
+                renderExpenses();
+            }
+        }
+
+        updateStoreName();
+        renderExpenses();
+    </script>
+</body>
+</html>

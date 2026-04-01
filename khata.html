@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>یوشع کراکری - کھاتہ مینجمنٹ</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#fbbf24">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
+    <style>
+        body {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            background-color: #0f172a;
+        }
+        .urdu-font {
+            font-family: 'Noto Nastaliq Urdu', serif;
+        }
+        .english-font {
+            font-family: 'Manrope', sans-serif;
+        }
+        .glass-effect {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        main {
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body class="text-slate-100 pb-24">
+
+    <!-- Top Bar -->
+    <header class="fixed top-0 inset-x-0 z-50 glass-effect p-4 flex justify-between items-center px-6">
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="p-2 hover:bg-slate-800 rounded-full transition-all text-slate-400">
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+            <h1 id="store-name-display" class="text-xl font-bold text-white urdu-font">کھاتہ مینجمنٹ</h1>
+        </div>
+        <button onclick="showAddModal()" class="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-600/20 hover:scale-105 transition-transform flex items-center justify-center">
+            <span class="material-symbols-outlined font-bold">person_add</span>
+        </button>
+    </header>
+
+    <main class="mt-24 px-4 space-y-6">
+        
+        <!-- Summary Card -->
+        <section class="bg-gradient-to-br from-blue-700 to-blue-900 p-8 rounded-[2.5rem] text-white space-y-2 shadow-2xl relative overflow-hidden border border-blue-600/30">
+            <div class="relative z-10 urdu-font">
+                <p class="text-blue-200 text-sm mb-1">مارکیٹ میں کل ادھار</p>
+                <h2 id="total-khata-balance" class="text-4xl font-bold english-font leading-tight">Rs. 0</h2>
+                <p id="total-customers" class="text-blue-100 text-[10px] mt-4 opacity-70 italic">کل کسٹمرز کا بیلنس باقی ہے</p>
+            </div>
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+        </section>
+
+        <!-- Search Customer -->
+        <div class="relative group">
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors">search</span>
+            <input type="text" id="khata-search" oninput="renderKhata()" placeholder="کسٹمر کا نام تلاش کریں..." class="w-full pr-12 pl-4 py-4 bg-slate-800/50 text-white rounded-2xl border border-slate-700/50 shadow-inner focus:ring-2 focus:ring-blue-500/50 transition-all text-sm outline-none urdu-font">
+        </div>
+
+        <!-- Khata List -->
+        <section id="khata-list" class="space-y-3 urdu-font">
+            <!-- Dynamic Data -->
+        </section>
+
+    </main>
+
+    <!-- Add Customer Modal -->
+    <div id="add-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 animate-in slide-in-from-bottom duration-300">
+            <div class="flex justify-between items-center mb-6 urdu-font">
+                <h3 class="text-lg font-bold text-white">نیا کھاتہ کھولیں</h3>
+                <button onclick="hideAddModal()" class="text-slate-500 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <form onsubmit="saveCustomer(event)" class="space-y-4 urdu-font">
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">کسٹمر کا نام</label>
+                    <input type="text" id="cust-name" required placeholder="نام درج کریں..." class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-blue-400/50">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">فون نمبر</label>
+                    <input type="text" id="cust-phone" placeholder="923001234567" class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-blue-400/50 english-font" dir="ltr">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">ابتدائی بیلنس (اگر کوئی ہے)</label>
+                    <input type="number" id="cust-balance" value="0" class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-blue-400/50 english-font" dir="ltr">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold mt-4 hover:scale-[1.02] transition-all">محفوظ کریں</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="pay-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 animate-in slide-in-from-bottom duration-300">
+            <div class="flex justify-between items-center mb-6 urdu-font">
+                <div>
+                    <h3 class="text-lg font-bold text-white">رقم وصول کریں</h3>
+                    <p id="pay-cust-name" class="text-xs text-slate-400 mt-1"></p>
+                </div>
+                <button onclick="hidePayModal()" class="text-slate-500 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <form onsubmit="savePayment(event)" class="space-y-4 urdu-font">
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">وصول شدہ رقم (Rs.)</label>
+                    <input type="number" id="pay-amount" required placeholder="0" class="w-full px-4 py-4 bg-slate-800/50 text-emerald-400 rounded-2xl border border-slate-700/30 text-xl font-bold outline-none focus:ring-2 focus:ring-emerald-400/50 english-font text-center">
+                </div>
+                <button type="submit" class="w-full bg-emerald-500 text-white py-4 rounded-2xl font-bold mt-4 hover:scale-[1.02] transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">done_all</span>
+                    ادائیگی محفوظ کریں
+                </button>
+            </form>
+        </div>
+    </div>
+    <!-- History/Ledger Modal -->
+    <div id="history-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-6 urdu-font">
+                <div>
+                    <h3 class="text-lg font-bold text-white">کھاتہ تفصیل (Ledger)</h3>
+                    <p id="history-cust-name" class="text-xs text-slate-400 mt-1"></p>
+                </div>
+                <button onclick="hideHistory()" class="text-slate-500 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div id="history-list" class="flex-grow overflow-y-auto space-y-3 urdu-font pr-2">
+                <!-- History Items -->
+            </div>
+
+            <div class="pt-6 border-t border-slate-800 mt-4 flex justify-between items-center urdu-font">
+                <span class="text-slate-400 text-sm">مجموعی واجب الادا:</span>
+                <span id="history-total-balance" class="text-xl font-bold english-font text-rose-400"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 inset-x-0 h-20 bg-slate-900 border-t border-slate-800 flex justify-around items-center px-6 z-[60] rounded-t-3xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] urdu-font">
+        <a href="index.html" id="nav-dashboard" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="text-[8px] font-bold">ڈیش بورڈ</span>
+        </a>
+        <a href="inventory.html" id="nav-stock" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <span class="text-[8px] font-bold">اسٹاک</span>
+        </a>
+        <a href="pos.html" id="nav-pos" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
+            <span class="material-symbols-outlined">shopping_cart</span>
+            <span class="text-[8px] font-bold">سیلز</span>
+        </a>
+        <a href="reports.html" id="nav-reports" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
+            <span class="material-symbols-outlined">analytics</span>
+            <span class="text-[8px] font-bold">رپورٹس</span>
+        </a>
+        <a href="khata.html" id="nav-khata" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
+            <span class="material-symbols-outlined">menu_book</span>
+            <span class="text-[8px] font-bold">ادھار</span>
+        </a>
+    </nav>
+
+    <script src="data.js"></script>
+    <script src="sync.js"></script>
+    <script>
+        function updateStoreName() {
+            const profile = AppData.getProfile();
+            if (profile && profile.name) {
+                document.getElementById('store-name-display').innerText = profile.name + " - کھاتہ";
+            }
+        }
+        updateStoreName();
+        function renderKhata() {
+            const khata = AppData.getKhata();
+            const list = document.getElementById('khata-list');
+            const search = document.getElementById('khata-search').value.toLowerCase();
+            
+            const totalBalance = khata.reduce((acc, c) => acc + c.balance, 0);
+            document.getElementById('total-khata-balance').innerText = `Rs. ${totalBalance.toLocaleString()}`;
+            document.getElementById('total-customers').innerText = `کل ${khata.filter(c => c.balance > 0).length} کسٹمرز کا بیلنس باقی ہے`;
+
+            const filtered = khata.filter(c => c.name.toLowerCase().includes(search));
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="text-center py-12 text-slate-600 text-xs italic">کوئی ریکارڈ نہیں ملا...</div>';
+                return;
+            }
+
+            list.innerHTML = filtered.reverse().map(customer => {
+                const initials = customer.name.split(' ').map(n => n[0]).join('').slice(0, 2);
+                return `
+                    <div class="bg-slate-800/40 p-5 rounded-3xl border border-slate-700/50 flex items-center justify-between group hover:bg-slate-800/60 transition-all ${customer.balance === 0 ? 'opacity-50' : ''}">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full ${customer.balance === 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-400'} flex items-center justify-center font-bold english-font border border-current opacity-70">${initials}</div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-200">${customer.name}</h4>
+                                <p class="text-[10px] text-slate-500 italic">آخری ادائیگی: ${customer.lastPay}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="text-left mr-2">
+                                <span class="${customer.balance === 0 ? 'text-emerald-500' : 'text-rose-400'} font-bold english-font block text-sm">Rs. ${customer.balance.toLocaleString()}</span>
+                                ${customer.balance === 0 ? '<span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>' : '<span class="text-[8px] text-slate-500 uppercase tracking-widest text-left block">Debited</span>'}
+                            </div>
+                            <button onclick="showHistory('${customer.name}')" class="bg-blue-500/10 text-blue-400 p-2 rounded-xl hover:bg-blue-500 hover:text-white transition-all" title="تفصیل">
+                                <span class="material-symbols-outlined text-sm font-bold">history</span>
+                            </button>
+                            <button onclick="showPayModal('${customer.name}')" class="bg-emerald-500/10 text-emerald-500 p-2 rounded-xl hover:bg-emerald-500 hover:text-white transition-all" title="وصولی">
+                                <span class="material-symbols-outlined text-sm font-bold">payments</span>
+                            </button>
+                            <button onclick="handleDelete(${customer.id})" class="text-slate-600 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
+        function hideAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+        let activeCustName = '';
+        function showPayModal(name) {
+            activeCustName = name;
+            document.getElementById('pay-cust-name').innerText = `کسٹمر: ${name}`;
+            document.getElementById('pay-amount').value = '';
+            document.getElementById('pay-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('pay-amount').focus(), 300);
+        }
+        function hidePayModal() { document.getElementById('pay-modal').classList.add('hidden'); }
+
+        function showHistory(name) {
+            const customer = AppData.getKhata().find(c => c.name === name);
+            if (!customer) return;
+
+            document.getElementById('history-cust-name').innerText = `کسٹمر: ${name}`;
+            document.getElementById('history-total-balance').innerText = `Rs. ${customer.balance.toLocaleString()}`;
+            
+            const list = document.getElementById('history-list');
+            const history = customer.transactions || [];
+            
+            if (history.length === 0) {
+                list.innerHTML = '<div class="text-center py-12 text-slate-600 text-xs italic">کوئی ہسٹری موجود نہیں...</div>';
+            } else {
+                list.innerHTML = history.reverse().map(t => `
+                    <div class="bg-slate-800/50 p-4 rounded-2xl border ${t.type === 'Purchase' ? 'border-rose-500/20' : 'border-emerald-500/20'} flex justify-between items-center">
+                        <div>
+                            <span class="text-[10px] ${t.type === 'Purchase' ? 'text-rose-400' : 'text-emerald-400'} font-bold px-2 py-0.5 rounded-full bg-current/10 mb-1 inline-block">
+                                ${t.type === 'Purchase' ? 'خریداری' : 'ادائیگی'}
+                            </span>
+                            <h5 class="text-[10px] text-slate-200">${t.details}</h5>
+                            <p class="text-[8px] text-slate-500 mt-0.5">${t.date}</p>
+                        </div>
+                        <span class="text-xs font-bold english-font ${t.type === 'Purchase' ? 'text-rose-400' : 'text-emerald-400'}">
+                            ${t.type === 'Purchase' ? '+' : '-'} Rs. ${t.amount.toLocaleString()}
+                        </span>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('history-modal').classList.remove('hidden');
+        }
+
+        function hideHistory() { document.getElementById('history-modal').classList.add('hidden'); }
+
+        function savePayment(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('pay-amount').value) || 0;
+            if (amount <= 0) return;
+
+            // Use updateKhata with Payment type
+            AppData.updateKhata(activeCustName, amount, 'Payment', 'نقد وصولی (Manual)');
+            
+            hidePayModal();
+            renderKhata();
+        }
+
+        function saveCustomer(e) {
+            e.preventDefault();
+            const name = document.getElementById('cust-name').value;
+            const balance = parseFloat(document.getElementById('cust-balance').value) || 0;
+            const phone = document.getElementById('cust-phone').value;
+
+            // Use the enhanced updateKhata to create/update
+            AppData.updateKhata(name, balance);
+            
+            // If phone was provided, update the last entry
+            if (phone) {
+                let khata = AppData.getKhata();
+                let last = khata.find(c => c.name === name);
+                if (last) {
+                    last.phone = phone;
+                    localStorage.setItem('yc_khata', JSON.stringify(khata));
+                }
+            }
+
+            hideAddModal();
+            renderKhata();
+        }
+
+        function handleDelete(id) {
+            if (confirm('کیا آپ یہ کسٹمر ریکارڈ ختم کرنا چاہتے ہیں؟')) {
+                AppData.deleteKhata(id);
+                renderKhata();
+            }
+        }
+
+        function highlightActiveNav() {
+            const path = window.location.pathname.split("/").pop().replace(/\.html$/, '') || 'index';
+            const navMap = { 'index': 'nav-dashboard', 'inventory': 'nav-stock', 'pos': 'nav-pos', 'reports': 'nav-reports', 'khata': 'nav-khata' };
+            const activeId = navMap[path];
+            if (activeId) {
+                const el = document.getElementById(activeId);
+                el.classList.remove('text-slate-500');
+                el.classList.add('text-amber-400');
+                el.querySelector('.material-symbols-outlined').style.fontVariationSettings = "'FILL' 1";
+            }
+        }
+        highlightActiveNav();
+        renderKhata();
+    </script>
+</body>
+</html>

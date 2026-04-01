@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>یوشع کراکری - آرڈرز مینجمنٹ</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#fbbf24">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
+    <style>
+        body {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            background-color: #0f172a;
+        }
+        .urdu-font {
+            font-family: 'Noto Nastaliq Urdu', serif;
+        }
+        .english-font {
+            font-family: 'Manrope', sans-serif;
+        }
+        .glass-effect {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        main {
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body class="text-slate-100 pb-24">
+
+    <!-- Top Bar -->
+    <header class="fixed top-0 inset-x-0 z-50 glass-effect p-4 flex justify-between items-center px-6">
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="p-2 hover:bg-slate-800 rounded-full transition-all text-slate-400">
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+            <h1 id="store-name-display" class="text-xl font-bold text-white urdu-font">سپلائرز اور آرڈرز</h1>
+        </div>
+        <button onclick="showAddModal()" class="bg-amber-400 text-slate-900 p-2 rounded-xl shadow-lg shadow-amber-400/20 hover:scale-105 transition-transform flex items-center justify-center">
+            <span class="material-symbols-outlined font-bold">add</span>
+        </button>
+    </header>
+
+    <main class="mt-24 px-4 space-y-8">
+        
+        <!-- Category Selector -->
+        <div id="view-toggle" class="bg-slate-800/50 p-1 rounded-2xl shadow-sm border border-slate-700/50 grid grid-cols-2 urdu-font">
+            <button onclick="toggleView('orders')" id="btn-orders" class="bg-amber-400 text-slate-900 py-3 rounded-xl text-xs font-bold shadow-md transition-all">آرڈرز</button>
+            <button onclick="toggleView('suppliers')" id="btn-suppliers" class="text-slate-500 py-3 rounded-xl text-xs font-bold transition-all hover:text-slate-300">سپلائرز</button>
+        </div>
+
+        <!-- Orders Tracker -->
+        <section id="orders-view" class="space-y-4 urdu-font">
+            <div class="flex justify-between items-center px-2">
+                <h3 class="text-lg font-bold text-slate-200">حالیہ فروخت / آرڈرز</h3>
+                <span id="sales-count" class="text-slate-500 text-[10px] english-font uppercase tracking-widest">Total: 0</span>
+            </div>
+            <div id="sales-list" class="space-y-4">
+                <!-- Sales history will appear here -->
+            </div>
+        </section>
+
+        <!-- Suppliers List -->
+        <section id="suppliers-view" class="space-y-4 urdu-font hidden">
+            <div class="flex justify-between items-center px-2">
+                <h3 class="text-lg font-bold text-slate-200">سپلائرز کی فہرست</h3>
+            </div>
+            <div id="suppliers-list" class="space-y-4">
+                <!-- Supplier data here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Add Supplier Modal -->
+    <div id="add-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 animate-in slide-in-from-bottom duration-300">
+            <div class="flex justify-between items-center mb-6 urdu-font">
+                <h3 class="text-lg font-bold text-white">نیا سپلائر شامل کریں</h3>
+                <button onclick="hideAddModal()" class="text-slate-500 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <form onsubmit="saveSupplier(event)" class="space-y-4 urdu-font">
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">سپلائر کا نام</label>
+                    <input type="text" id="sup-name" required placeholder="مثلاً: الرحیم گلاس ہاؤس..." class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-amber-400/50">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">کیٹیگری</label>
+                    <input type="text" id="sup-category" required placeholder="مثلاً: ڈنر سیٹ، گلاس ویئر..." class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-amber-400/50">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">واجب الادا رقم (Payable Amount)</label>
+                    <input type="number" id="sup-balance" value="0" class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-amber-400/50 english-font" dir="ltr">
+                </div>
+                <button type="submit" class="w-full bg-amber-400 text-slate-900 py-4 rounded-2xl font-bold mt-4 hover:scale-[1.02] transition-all">محفوظ کریں</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 inset-x-0 bottom-nav h-20 flex justify-around items-center px-6 z-50 rounded-t-3xl urdu-font">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="text-[8px] font-bold">ڈیش بورڈ</span>
+        </a>
+        <a href="inventory.html" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <span class="text-[8px] font-bold">اسٹاک</span>
+        </a>
+        <a href="pos.html" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+            <span class="material-symbols-outlined">shopping_cart</span>
+            <span class="text-[8px] font-bold">سیلز</span>
+        </a>
+        <a href="reports.html" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+            <span class="material-symbols-outlined">analytics</span>
+            <span class="text-[8px] font-bold">رپورٹس</span>
+        </a>
+        <a href="khata.html" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+            <span class="material-symbols-outlined">menu_book</span>
+            <span class="text-[8px] font-bold">ادھار</span>
+        </a>
+    </nav>
+
+    <script src="data.js"></script>
+    <script src="sync.js"></script>
+    <script>
+        function updateStoreName() {
+            const profile = AppData.getProfile();
+            if (profile && profile.name) {
+                document.getElementById('store-name-display').innerText = profile.name + " - سپلائرز";
+            }
+        }
+        updateStoreName();
+        function toggleView(view) {
+            const ordView = document.getElementById('orders-view');
+            const supView = document.getElementById('suppliers-view');
+            const ordBtn = document.getElementById('btn-orders');
+            const supBtn = document.getElementById('btn-suppliers');
+
+            if (view === 'orders') {
+                ordView.classList.remove('hidden');
+                supView.classList.add('hidden');
+                ordBtn.className = "bg-amber-400 text-slate-900 py-3 rounded-xl text-xs font-bold shadow-md transition-all";
+                supBtn.className = "text-slate-500 py-3 rounded-xl text-xs font-bold transition-all hover:text-slate-300";
+            } else {
+                ordView.classList.add('hidden');
+                supView.classList.remove('hidden');
+                supBtn.className = "bg-amber-400 text-slate-900 py-3 rounded-xl text-xs font-bold shadow-md transition-all";
+                ordBtn.className = "text-slate-500 py-3 rounded-xl text-xs font-bold transition-all hover:text-slate-300";
+                renderSuppliers();
+            }
+        }
+
+        function renderSales() {
+            const sales = AppData.getSales();
+            const list = document.getElementById('sales-list');
+            document.getElementById('sales-count').innerText = `Total: ${sales.length}`;
+
+            if (sales.length === 0) {
+                list.innerHTML = '<div class="text-center py-8 text-slate-500 text-xs italic">ابھی تک کوئی فروخت ریکارڈ نہیں ہوئی...</div>';
+                return;
+            }
+
+            list.innerHTML = sales.reverse().map(sale => `
+                <div class="bg-slate-800/40 p-5 rounded-3xl border border-slate-700/50 space-y-4 hover:bg-slate-800/60 transition-all">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-200">${sale.customer}</h4>
+                            <p class="text-[10px] text-slate-500 italic">تاریخ: ${sale.date}</p>
+                        </div>
+                        <span class="bg-amber-400/10 text-amber-400 px-3 py-1 rounded-full text-[10px] font-bold border border-amber-400/20">${sale.payment}</span>
+                    </div>
+                    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                        ${sale.items.map(i => `
+                            <div class="w-8 h-8 rounded-full bg-slate-900 border border-slate-700 overflow-hidden shrink-0">
+                                <img src="${i.image}" class="w-full h-full object-cover">
+                            </div>
+                        `).join('')}
+                        <span class="text-[10px] text-slate-500 font-bold px-2">${sale.items.length} اشیاء</span>
+                    </div>
+                    <div class="pt-4 border-t border-slate-700/50 flex justify-between items-center">
+                        <span class="text-[10px] text-slate-400 italic">${sale.phone || 'نمبر موجود نہیں'}</span>
+                        <span class="english-font font-bold text-amber-400">Rs. ${sale.total.toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSuppliers() {
+            const suppliers = AppData.getSuppliers();
+            const list = document.getElementById('suppliers-list');
+            
+            if (suppliers.length === 0) {
+                list.innerHTML = '<div class="text-center py-12 text-slate-600 text-xs italic">کوئی سپلائر موجود نہیں...</div>';
+                return;
+            }
+
+            list.innerHTML = suppliers.reverse().map(s => `
+                <div class="bg-slate-800/40 p-6 rounded-[2rem] text-white flex justify-between items-center shadow-xl border border-slate-700/50 hover:bg-slate-800/60 transition-all group">
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-200">${s.name}</h4>
+                        <p class="text-[10px] opacity-40">${s.category}</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-left">
+                            <span class="text-xl font-bold english-font text-amber-400">Rs. ${s.balance.toLocaleString()}</span>
+                            <span class="text-[8px] text-slate-500 uppercase tracking-widest block">Payable</span>
+                        </div>
+                        <button onclick="handleDelete(${s.id})" class="text-slate-600 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">
+                            <span class="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
+        function hideAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+        function saveSupplier(e) {
+            e.preventDefault();
+            const supplier = {
+                name: document.getElementById('sup-name').value,
+                category: document.getElementById('sup-category').value,
+                balance: parseFloat(document.getElementById('sup-balance').value) || 0
+            };
+            AppData.addSupplier(supplier);
+            hideAddModal();
+            renderSuppliers();
+        }
+
+        function handleDelete(id) {
+            if (confirm('کیا آپ یہ سپلائر ریکارڈ ختم کرنا چاہتے ہیں؟')) {
+                AppData.deleteSupplier(id);
+                renderSuppliers();
+            }
+        }
+
+        renderSales();
+    </script>
+</body>
+</html>
