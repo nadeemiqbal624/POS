@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yousha-pos-v2';
+const CACHE_NAME = 'my-business-pos-v4';
 const ASSETS = [
   './',
   'index.html',

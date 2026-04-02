@@ -1,7 +1,7 @@
 {
-  "name": "یوشع کراکری POS",
-  "short_name": "Yousha POS",
-  "description": "Yousha Crockery Point of Sale System",
+  "name": "مائی بزنس POS",
+  "short_name": "My Business",
+  "description": "My Business Point of Sale System",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0f172a",
