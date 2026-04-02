@@ -4,7 +4,7 @@
  */
 
 const SYNC_CONFIG = {
-    CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID_HERE', // User needs to provide this
+    CLIENT_ID: '639694745913-bnetaj2roioqvc3dg7diaiec0c62c9eo.apps.googleusercontent.com', // User provided ID
     SCOPES: 'https://www.googleapis.com/auth/drive.file',
     DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
     FILE_NAME: 'pos_backup_yc.json'
