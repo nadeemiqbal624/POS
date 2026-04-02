@@ -89,25 +89,28 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 inset-x-0 bottom-nav h-20 flex justify-around items-center px-6 z-50 rounded-t-3xl urdu-font">
-        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500">
+    <nav class="fixed bottom-0 inset-x-0 h-20 bg-slate-900 border-t border-slate-800 flex justify-around items-center px-6 z-[60] rounded-t-3xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] urdu-font">
+        <a href="index.html" id="nav-dashboard" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
             <span class="material-symbols-outlined">dashboard</span>
             <span class="text-[8px] font-bold">ڈیش بورڈ</span>
         </a>
-        <a href="inventory.html" class="flex flex-col items-center gap-1 text-slate-500">
+        <a href="inventory.html" id="nav-stock" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
             <span class="material-symbols-outlined">inventory_2</span>
             <span class="text-[8px] font-bold">اسٹاک</span>
         </a>
-        <a href="pos.html" class="flex flex-col items-center gap-1 text-slate-500">
+        <a href="pos.html" id="nav-pos" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
             <span class="material-symbols-outlined">shopping_cart</span>
             <span class="text-[8px] font-bold">سیلز</span>
         </a>
-        <a href="expenses.html" class="flex flex-col items-center gap-1 text-rose-400">
-            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+        <a href="reports.html" id="nav-reports" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
+            <span class="material-symbols-outlined">analytics</span>
+            <span class="text-[8px] font-bold">رپورٹس</span>
+        </a>
+        <a href="expenses.html" id="nav-expenses" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
+            <span class="material-symbols-outlined">payments</span>
             <span class="text-[8px] font-bold">اخراجات</span>
         </a>
-        <a href="khata.html" class="flex flex-col items-center gap-1 text-slate-500">
+        <a href="khata.html" id="nav-khata" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
             <span class="material-symbols-outlined">menu_book</span>
             <span class="text-[8px] font-bold">ادھار</span>
         </a>
@@ -188,30 +191,25 @@
             }
         }
 
-        function highlightActiveNav() {
+        function highlightNav() {
             const path = window.location.pathname.toLowerCase();
-            const navMap = { 
-                'index': 'nav-dashboard', 
-                'inventory': 'nav-stock', 
-                'pos': 'nav-pos', 
-                'reports': 'nav-reports', 
-                'khata': 'nav-khata' 
-            };
-            
-            for (const [key, id] of Object.entries(navMap)) {
-                if (path.includes(key)) {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.classList.remove('text-slate-500');
-                        el.classList.add('text-amber-400');
-                        const icon = el.querySelector('.material-symbols-outlined');
-                        if (icon) icon.style.fontVariationSettings = "'FILL' 1";
-                    }
-                    break;
+            const links = document.querySelectorAll('nav a');
+            links.forEach(link => {
+                const href = link.getAttribute('href').toLowerCase();
+                if (path.includes(href) || (href === 'index.html' && (path.endsWith('/') || path.endsWith('index.html')))) {
+                    link.classList.remove('text-slate-500', 'text-amber-400');
+                    link.classList.add('text-amber-400');
+                    const icon = link.querySelector('.material-symbols-outlined');
+                    if (icon) icon.style.fontVariationSettings = "'FILL' 1";
+                } else {
+                    link.classList.remove('text-slate-500', 'text-amber-400');
+                    link.classList.add('text-slate-500');
+                    const icon = link.querySelector('.material-symbols-outlined');
+                    if (icon) icon.style.fontVariationSettings = "'FILL' 0";
                 }
-            }
+            });
         }
-        highlightActiveNav();
+        highlightNav();
         renderExpenses();
     </script>
 </body>

@@ -291,6 +291,10 @@
             <span class="material-symbols-outlined">analytics</span>
             <span class="text-[8px] font-bold">رپورٹس</span>
         </a>
+        <a href="expenses.html" id="nav-expenses" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
+            <span class="material-symbols-outlined">payments</span>
+            <span class="text-[8px] font-bold">اخراجات</span>
+        </a>
         <a href="khata.html" id="nav-khata" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
             <span class="material-symbols-outlined">menu_book</span>
             <span class="text-[8px] font-bold">ادھار</span>
@@ -634,13 +638,22 @@
         renderCart();
 
         function highlightNav() {
-            const el = document.getElementById('nav-pos');
-            if (el) {
-                el.classList.remove('text-slate-500');
-                el.classList.add('text-amber-400');
-                const icon = el.querySelector('.material-symbols-outlined');
-                if (icon) icon.style.fontVariationSettings = "'FILL' 1";
-            }
+            const path = window.location.pathname.toLowerCase();
+            const links = document.querySelectorAll('nav a');
+            links.forEach(link => {
+                const href = link.getAttribute('href').toLowerCase();
+                if (path.includes(href) || (href === 'index.html' && (path.endsWith('/') || path.endsWith('index.html')))) {
+                    link.classList.remove('text-slate-500', 'text-amber-400');
+                    link.classList.add('text-amber-400');
+                    const icon = link.querySelector('.material-symbols-outlined');
+                    if (icon) icon.style.fontVariationSettings = "'FILL' 1";
+                } else {
+                    link.classList.remove('text-slate-500', 'text-amber-400');
+                    link.classList.add('text-slate-500');
+                    const icon = link.querySelector('.material-symbols-outlined');
+                    if (icon) icon.style.fontVariationSettings = "'FILL' 0";
+                }
+            });
         }
         highlightNav();
         initPOS();

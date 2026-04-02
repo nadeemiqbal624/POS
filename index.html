@@ -54,6 +54,7 @@
             </div>
         </div>
         <div class="flex items-center gap-4">
+            <button onclick="confirmExit()" class="material-symbols-outlined text-rose-500 bg-slate-800/50 p-2 rounded-full cursor-pointer hover:bg-rose-500/10 transition-all" title="اخراج">power_settings_new</button>
             <span onclick="showSettingsModal()" class="material-symbols-outlined text-slate-400 bg-slate-800/50 p-2 rounded-full cursor-pointer hover:bg-slate-700 transition-all">settings</span>
             <div class="w-10 h-10 rounded-full border-2 border-slate-700 shadow-sm overflow-hidden bg-slate-800">
                 <img src="https://ui-avatars.com/api/?name=Joshua&background=fbbf24&color=0f172a" alt="User">
@@ -234,6 +235,10 @@
             <span class="material-symbols-outlined">analytics</span>
             <span class="text-[8px] font-bold">رپورٹس</span>
         </a>
+        <a href="expenses.html" id="nav-expenses" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
+            <span class="material-symbols-outlined">payments</span>
+            <span class="text-[8px] font-bold">اخراجات</span>
+        </a>
         <a href="khata.html" id="nav-khata" class="flex flex-col items-center gap-1 transition-colors text-slate-500">
             <span class="material-symbols-outlined">menu_book</span>
             <span class="text-[8px] font-bold">ادھار</span>
@@ -358,13 +363,22 @@
         }
 
         function highlightNav() {
-            const el = document.getElementById('nav-dashboard');
-            if (el) {
-                el.classList.remove('text-slate-500');
-                el.classList.add('text-amber-400');
-                const icon = el.querySelector('.material-symbols-outlined');
-                if (icon) icon.style.fontVariationSettings = "'FILL' 1";
-            }
+            const path = window.location.pathname.toLowerCase();
+            const links = document.querySelectorAll('nav a');
+            links.forEach(link => {
+                const href = link.getAttribute('href').toLowerCase();
+                if (path.includes(href) || (href === 'index.html' && (path.endsWith('/') || path.endsWith('index.html')))) {
+                    link.classList.remove('text-slate-500', 'text-amber-400');
+                    link.classList.add('text-amber-400');
+                    const icon = link.querySelector('.material-symbols-outlined');
+                    if (icon) icon.style.fontVariationSettings = "'FILL' 1";
+                } else {
+                    link.classList.remove('text-slate-500', 'text-amber-400');
+                    link.classList.add('text-slate-500');
+                    const icon = link.querySelector('.material-symbols-outlined');
+                    if (icon) icon.style.fontVariationSettings = "'FILL' 0";
+                }
+            });
         }
         highlightNav();
 
@@ -403,6 +417,23 @@
         // Hide install button if app is already running in standalone mode
         if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
             installBtn.classList.add('hidden');
+        }
+        function confirmExit() {
+            if (confirm("کیا آپ واقعی ایپ سے باہر نکلنا چاہتے ہیں؟")) {
+                window.close();
+                // Browsers often block window.close() unless opened by script
+                setTimeout(() => {
+                    alert("براہ کرم ایپ بند کرنے کے لیے اس ٹیب یا ونڈو کو خود بند کر دیں۔");
+                }, 500);
+            }
+        }
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW: Registered', reg))
+                    .catch(err => console.log('SW: Failed', err));
+            });
         }
     </script>
 </body>

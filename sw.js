@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-business-pos-v5';
+const CACHE_NAME = 'my-business-pos-v6';
 const ASSETS = [
   './',
   'index.html',
@@ -11,6 +11,9 @@ const ASSETS = [
   'data.js',
   'sync.js',
   'manifest.json',
+  'icon-192.png',
+  'icon-512.png',
+  'logo.png',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Manrope:wght@400;700&display=swap',
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap'
