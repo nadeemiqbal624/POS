@@ -1,7 +1,7 @@
 {
   "name": "مائی بزنس POS",
   "short_name": "My Business",
-  "description": "My Business Point of Sale System",
+  "description": "Premium Point of Sale System",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -10,7 +10,8 @@
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon-512.png",

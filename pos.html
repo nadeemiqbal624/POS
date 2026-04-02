@@ -571,7 +571,7 @@
 
         function prepareReceipt(sale) {
             const profile = AppData.getProfile();
-            document.getElementById('print-store-name').innerText = profile.name;
+            document.getElementById('print-store-name').innerText = profile.name || "مائی بزنس";
             document.getElementById('print-store-address').innerText = profile.address || '';
             document.getElementById('print-store-phone').innerText = profile.phone || '';
             document.getElementById('print-date').innerText = sale.date;

@@ -1,5 +1,5 @@
 /**
- * Yousha Crockery - Shared Data Utility
+ * My Business POS - Shared Data Utility
  * Handles localStorage persistence for Inventory, Sales, and Khata.
  */
 
@@ -9,7 +9,7 @@ const AppData = {
 
     init() {
         if (!localStorage.getItem('yc_categories')) {
-            localStorage.setItem('yc_categories', JSON.stringify(['Dinner Set', 'Tea Set', 'Plates', 'Bowls', 'Kitchenware']));
+            localStorage.setItem('yc_categories', JSON.stringify(['عام', 'کرانہ', 'الیکٹرانکس', 'کپڑے']));
         }
         if (!localStorage.getItem('yc_inventory')) {
             localStorage.setItem('yc_inventory', JSON.stringify([]));
