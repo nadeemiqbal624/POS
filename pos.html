@@ -301,13 +301,6 @@
     <script src="data.js"></script>
     <script src="sync.js"></script>
     <script>
-        function updateStoreName() {
-            const profile = AppData.getProfile();
-            if (profile && profile.name) {
-                document.getElementById('store-name-display').innerText = profile.name + " - سیلز";
-            }
-        }
-        updateStoreName();
         let cart = [];
         let inventory = [];
 
@@ -425,9 +418,14 @@
             } else {
                 cart.push({ ...product, qty: 1 });
             }
-
             hideProductModal();
             renderCart();
+        }
+
+        function initPOS() {
+            const el = document.getElementById('store-name-display');
+            if (el) el.innerText = "سیلز (POS)";
+            renderCategories();
         }
 
         function removeFromCart(id) {
@@ -635,18 +633,17 @@
         inventory = AppData.getInventory();
         renderCart();
 
-        function highlightActiveNav() {
-            const path = window.location.pathname.split("/").pop().replace(/\.html$/, '') || 'index';
-            const navMap = { 'index': 'nav-dashboard', 'inventory': 'nav-stock', 'pos': 'nav-pos', 'reports': 'nav-reports', 'khata': 'nav-khata' };
-            const activeId = navMap[path];
-            if (activeId) {
-                const el = document.getElementById(activeId);
+        function highlightNav() {
+            const el = document.getElementById('nav-pos');
+            if (el) {
                 el.classList.remove('text-slate-500');
                 el.classList.add('text-amber-400');
-                el.querySelector('.material-symbols-outlined').style.fontVariationSettings = "'FILL' 1";
+                const icon = el.querySelector('.material-symbols-outlined');
+                if (icon) icon.style.fontVariationSettings = "'FILL' 1";
             }
         }
-        highlightActiveNav();
+        highlightNav();
+        initPOS();
     </script>
 </body>
 </html>

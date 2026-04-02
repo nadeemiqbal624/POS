@@ -55,12 +55,21 @@ const AppData = {
     },
 
     getProfile() {
-        return JSON.parse(localStorage.getItem('yc_profile'));
+        try {
+            const profile = localStorage.getItem('yc_profile');
+            return profile ? JSON.parse(profile) : { name: 'مائی بزنس', phone: '', address: '', logo: 'logo.png' };
+        } catch (e) {
+            return { name: 'مائی بزنس', phone: '', address: '', logo: 'logo.png' };
+        }
     },
 
     updateProfile(profile) {
         localStorage.setItem('yc_profile', JSON.stringify(profile));
-        if (typeof autoSync === 'function') autoSync();
+        try {
+            if (typeof autoSync === 'function') autoSync();
+        } catch (e) {
+            console.error("Sync error:", e);
+        }
     },
 
     getSuppliers() {

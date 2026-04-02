@@ -185,6 +185,7 @@
         }
 
         function updateReports() {
+            document.getElementById('store-name-display').innerText = "مالیاتی رپورٹس";
             const fromStr = document.getElementById('date-from').value;
             const toStr = document.getElementById('date-to').value;
             
@@ -281,18 +282,17 @@
 
         init();
 
-        function highlightActiveNav() {
-            const path = window.location.pathname.split("/").pop().replace(/\.html$/, '') || 'index';
-            const navMap = { 'index': 'nav-dashboard', 'inventory': 'nav-stock', 'pos': 'nav-pos', 'reports': 'nav-reports', 'khata': 'nav-khata' };
-            const activeId = navMap[path];
-            if (activeId) {
-                const el = document.getElementById(activeId);
+        function highlightNav() {
+            const el = document.getElementById('nav-reports');
+            if (el) {
                 el.classList.remove('text-slate-500');
                 el.classList.add('text-amber-400');
-                el.querySelector('.material-symbols-outlined').style.fontVariationSettings = "'FILL' 1";
+                const icon = el.querySelector('.material-symbols-outlined');
+                if (icon) icon.style.fontVariationSettings = "'FILL' 1";
             }
         }
-        highlightActiveNav();
+        highlightNav();
+        updateReports();
     </script>
 </body>
 </html>

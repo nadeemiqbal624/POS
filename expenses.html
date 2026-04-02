@@ -188,7 +188,30 @@
             }
         }
 
-        updateStoreName();
+        function highlightActiveNav() {
+            const path = window.location.pathname.toLowerCase();
+            const navMap = { 
+                'index': 'nav-dashboard', 
+                'inventory': 'nav-stock', 
+                'pos': 'nav-pos', 
+                'reports': 'nav-reports', 
+                'khata': 'nav-khata' 
+            };
+            
+            for (const [key, id] of Object.entries(navMap)) {
+                if (path.includes(key)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.classList.remove('text-slate-500');
+                        el.classList.add('text-amber-400');
+                        const icon = el.querySelector('.material-symbols-outlined');
+                        if (icon) icon.style.fontVariationSettings = "'FILL' 1";
+                    }
+                    break;
+                }
+            }
+        }
+        highlightActiveNav();
         renderExpenses();
     </script>
 </body>
