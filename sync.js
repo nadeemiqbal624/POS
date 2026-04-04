@@ -38,12 +38,27 @@ function gisLoaded() {
 
 function checkSyncStatus() {
     if (gapiInited && gisInited) {
-        // Automatically try to get a token if we had one before
+        // Try restoring token from localStorage
+        const storedTokenStr = localStorage.getItem('google_access_token');
+        if (storedTokenStr) {
+            try {
+                const storedToken = JSON.parse(storedTokenStr);
+                // Check if it's valid (with 5 minute buffer)
+                if (storedToken.expiry > Date.now() + 300000) {
+                    gapi.client.setToken({ access_token: storedToken.access_token });
+                    updateSyncUI('connected');
+                    return;
+                } else {
+                    localStorage.removeItem('google_access_token');
+                }
+            } catch(e) {}
+        }
+
         const token = gapi.client.getToken();
         if (token) {
             updateSyncUI('connected');
         } else {
-            // Try silent login if we've already authorized in this session
+            // Try silent login if we've already authorized
             try {
                 autoSync();
             } catch(e) {}
@@ -72,6 +87,11 @@ async function handleSyncAuth() {
 
     tokenClient.callback = async (resp) => {
         if (resp.error !== undefined) throw (resp);
+        // Save token to persist across pages
+        localStorage.setItem('google_access_token', JSON.stringify({
+            access_token: resp.access_token,
+            expiry: Date.now() + (resp.expires_in * 1000)
+        }));
         updateSyncUI('connected');
         await performFullSync();
     };
@@ -262,6 +282,11 @@ async function autoSync() {
                 tokenClient.callback = async (resp) => {
                     isAuthenticating = false;
                     if (resp.error !== undefined) return;
+                    // Save token locally
+                    localStorage.setItem('google_access_token', JSON.stringify({
+                        access_token: resp.access_token,
+                        expiry: Date.now() + (resp.expires_in * 1000)
+                    }));
                     updateSyncUI('connected');
                     await performFullSync();
                 };

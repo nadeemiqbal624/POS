@@ -62,22 +62,20 @@ const UI = {
     },
 
     /**
-     * Confirmation dialog before exiting the app.
+     * Locks the app instantly.
      */
-    confirmExit() {
-        if (confirm("کیا آپ واقعی ایپ سے باہر نکلنا چاہتے ہیں؟")) {
-            // Attempt to close the window
-            window.close();
-            
-            // Hack for some browsers to allow closing
-            window.open('', '_self', '');
-            window.close();
-
-            // If still open, show a clearer message
-            setTimeout(() => {
-                alert("سیکیورٹی کی وجہ سے براؤزر خودکار طور پر ونڈو بند نہیں کر سکتا۔ براہ کرم اس ٹیب یا ونڈو کو خود بند کر دیں۔");
-            }, 300);
+    lockApp() {
+        if (typeof AppData === 'undefined') return;
+        const profile = AppData.getProfile();
+        
+        if (!profile.pin) {
+            alert("ایپ لاک کرنے کے لیے پہلے 'سیٹنگز' میں جا کر پن کوڈ سیٹ کریں!");
+            return;
         }
+
+        // Lock it
+        sessionStorage.removeItem('pos_unlocked');
+        this.checkAppLock();
     },
 
     /**
