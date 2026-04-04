@@ -106,6 +106,44 @@
             </div>
         </div>
 
+        <!-- Sale Detail Modal -->
+        <div id="sale-detail-modal" class="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+            <div class="bg-slate-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[85vh]">
+                <div class="flex justify-between items-center mb-6 urdu-font">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">بل کی تفصیل</h3>
+                        <p id="detail-invoice-no" class="text-[10px] text-slate-500 english-font"></p>
+                    </div>
+                    <button onclick="hideSaleDetail()" class="text-slate-500 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                
+                <div id="sale-items-list" class="flex-grow overflow-y-auto space-y-3 urdu-font pr-2 no-scrollbar">
+                    <!-- Items will be listed here -->
+                </div>
+
+                <div class="pt-6 border-t border-slate-800 mt-4 space-y-2 urdu-font">
+                    <div class="flex justify-between items-center text-xs text-slate-400">
+                        <span>ذیلی کل (Subtotal):</span>
+                        <span id="detail-subtotal" class="english-font"></span>
+                    </div>
+                    <div id="detail-discount-row" class="flex justify-between items-center text-xs text-rose-400 hidden">
+                        <span>ڈسکاؤنٹ:</span>
+                        <span id="detail-discount" class="english-font"></span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-white font-bold">کل رقم:</span>
+                        <span id="detail-total" class="text-xl font-bold english-font text-amber-400"></span>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-slate-800/50">
+                        <span id="detail-customer"></span>
+                        <span id="detail-date" class="english-font"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Detail Tabs -->
         <section class="space-y-4 urdu-font">
             <div class="flex gap-2">
@@ -149,6 +187,7 @@
     </nav>
 
     <script src="data.js"></script>
+    <script src="ui.js"></script>
     <script>
         let currentTab = 'sales';
 
@@ -260,14 +299,17 @@
 
             if (currentTab === 'sales') {
                 container.innerHTML = items.reverse().map(s => `
-                    <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 flex justify-between items-center transition-all hover:bg-slate-800/60">
+                    <div onclick="showSaleDetail('${s.id}')" class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 flex justify-between items-center transition-all hover:bg-slate-800/60 cursor-pointer group">
                         <div>
-                            <h4 class="font-bold text-xs text-slate-200">${s.customer}</h4>
+                            <h4 class="font-bold text-xs text-slate-200 group-hover:text-amber-400 transition-colors">${s.customer}</h4>
                             <p class="text-[9px] text-slate-500">${s.date} • ${s.items.length} اشیاء</p>
                         </div>
-                        <div class="text-left">
-                            <span class="text-xs font-bold text-amber-400 block english-font">Rs. ${s.total.toLocaleString()}</span>
-                            <span class="text-[8px] text-emerald-500 english-font font-bold">P: Rs. ${(s.profit || 0).toLocaleString()}</span>
+                        <div class="text-left flex items-center gap-3">
+                            <div class="text-left">
+                                <span class="text-xs font-bold text-amber-400 block english-font">Rs. ${s.total.toLocaleString()}</span>
+                                <span class="text-[8px] text-emerald-500 english-font font-bold">P: Rs. ${(s.profit || 0).toLocaleString()}</span>
+                            </div>
+                            <span class="material-symbols-outlined text-slate-600 text-sm group-hover:text-amber-400 transition-colors">visibility</span>
                         </div>
                     </div>
                 `).join('');
@@ -284,27 +326,51 @@
             }
         }
 
+        function showSaleDetail(id) {
+            const sale = AppData.getSales().find(s => s.id == id);
+            if (!sale) return;
+
+            document.getElementById('detail-invoice-no').innerText = sale.invoiceNo || 'N/A';
+            document.getElementById('detail-subtotal').innerText = `Rs. ${sale.subtotal.toLocaleString()}`;
+            
+            const discAmt = (sale.subtotal * (sale.discount || 0)) / 100;
+            const discRow = document.getElementById('detail-discount-row');
+            if (discAmt > 0) {
+                discRow.classList.remove('hidden');
+                document.getElementById('detail-discount').innerText = `- Rs. ${discAmt.toLocaleString()} (${sale.discount}%)`;
+            } else {
+                discRow.classList.add('hidden');
+            }
+
+            document.getElementById('detail-total').innerText = `Rs. ${sale.total.toLocaleString()}`;
+            document.getElementById('detail-customer').innerText = `کسٹمر: ${sale.customer}`;
+            document.getElementById('detail-date').innerText = sale.date;
+
+            const list = document.getElementById('sale-items-list');
+            list.innerHTML = sale.items.map(item => `
+                <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/30 flex justify-between items-center">
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-200">${item.name}</h5>
+                        <p class="text-[9px] text-slate-500 english-font">${item.qty} x Rs. ${item.price.toLocaleString()}</p>
+                    </div>
+                    <span class="text-xs font-bold text-slate-300 english-font">Rs. ${(item.qty * item.price).toLocaleString()}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('sale-detail-modal').classList.remove('hidden');
+        }
+
+        function hideSaleDetail() {
+            document.getElementById('sale-detail-modal').classList.add('hidden');
+        }
+
+        // Close modal when clicking background
+        document.getElementById('sale-detail-modal').addEventListener('click', function(e) {
+            if (e.target === this) hideSaleDetail();
+        });
+
         init();
 
-        function highlightNav() {
-            const path = window.location.pathname.toLowerCase();
-            const links = document.querySelectorAll('nav a');
-            links.forEach(link => {
-                const href = link.getAttribute('href').toLowerCase();
-                if (path.includes(href) || (href === 'index.html' && (path.endsWith('/') || path.endsWith('index.html')))) {
-                    link.classList.remove('text-slate-500', 'text-amber-400');
-                    link.classList.add('text-amber-400');
-                    const icon = link.querySelector('.material-symbols-outlined');
-                    if (icon) icon.style.fontVariationSettings = "'FILL' 1";
-                } else {
-                    link.classList.remove('text-slate-500', 'text-amber-400');
-                    link.classList.add('text-slate-500');
-                    const icon = link.querySelector('.material-symbols-outlined');
-                    if (icon) icon.style.fontVariationSettings = "'FILL' 0";
-                }
-            });
-        }
-        highlightNav();
     </script>
 </body>
 </html>

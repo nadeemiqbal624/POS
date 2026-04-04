@@ -43,10 +43,10 @@
 <body class="text-slate-100 pb-24">
 
     <!-- Top Bar -->
-    <header class="fixed top-0 inset-x-0 z-50 glass-effect p-4 flex justify-between items-center px-6">
+    <header class="fixed top-0 inset-x-0 z-[100] glass-effect p-4 flex justify-between items-center px-6">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center shadow-lg shadow-amber-400/20 overflow-hidden">
-                <img src="logo.png" alt="Yousha Logo" class="w-full h-full object-cover scale-110">
+                <img src="logo.png" alt="Store Logo" class="w-full h-full object-cover scale-110">
             </div>
             <div>
                 <h1 id="store-name-display" class="text-xl font-bold text-white urdu-font">مائی بزنس</h1>
@@ -54,10 +54,10 @@
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <button onclick="confirmExit()" class="material-symbols-outlined text-rose-500 bg-slate-800/50 p-2 rounded-full cursor-pointer hover:bg-rose-500/10 transition-all" title="اخراج">power_settings_new</button>
+            <button onclick="UI.confirmExit()" class="material-symbols-outlined text-rose-500 bg-slate-800/50 p-2 rounded-full cursor-pointer hover:bg-rose-500/10 transition-all" title="اخراج">power_settings_new</button>
             <span onclick="showSettingsModal()" class="material-symbols-outlined text-slate-400 bg-slate-800/50 p-2 rounded-full cursor-pointer hover:bg-slate-700 transition-all">settings</span>
             <div class="w-10 h-10 rounded-full border-2 border-slate-700 shadow-sm overflow-hidden bg-slate-800">
-                <img src="https://ui-avatars.com/api/?name=Joshua&background=fbbf24&color=0f172a" alt="User">
+                <img src="https://ui-avatars.com/api/?name=User&background=fbbf24&color=0f172a" alt="User">
             </div>
         </div>
     </header>
@@ -88,9 +88,14 @@
         </div>
 
         <!-- Search Bar -->
-        <div class="relative group">
+        <div class="relative group z-[70]">
             <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-400 transition-colors">search</span>
-            <input type="text" placeholder="آئٹم یا کوڈ تلاش کریں..." class="w-full pr-12 pl-4 py-4 bg-slate-800/50 text-white rounded-2xl border border-slate-700/50 shadow-inner focus:ring-2 focus:ring-amber-400/50 transition-all text-sm outline-none urdu-font">
+            <input type="text" id="dashboard-search" oninput="handleDashboardSearch()" placeholder="آئٹم یا کوڈ تلاش کریں..." class="w-full pr-12 pl-4 py-4 bg-slate-800/50 text-white rounded-2xl border border-slate-700/50 shadow-inner focus:ring-2 focus:ring-amber-400/50 transition-all text-sm outline-none urdu-font">
+            
+            <!-- Floating Results -->
+            <div id="search-results-dropdown" class="absolute top-[calc(100%+8px)] inset-x-0 bg-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl hidden max-h-[320px] overflow-y-auto no-scrollbar urdu-font p-2 space-y-1">
+                <!-- Dynamic Results -->
+            </div>
         </div>
 
         <!-- Hero Stats Cards -->
@@ -132,7 +137,7 @@
         </div>
 
         <!-- Store Settings Modal -->
-        <div id="settings-modal" class="fixed inset-0 z-[100] modal-bg hidden flex items-end sm:items-center justify-center p-4">
+        <div id="settings-modal" class="fixed inset-0 z-[150] modal-bg hidden flex items-end sm:items-center justify-center p-4">
             <div class="bg-slate-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 animate-in slide-in-from-bottom duration-300">
                 <div class="flex justify-between items-center mb-6 urdu-font">
                     <h3 class="text-lg font-bold text-white">اسٹور کی سیٹنگز</h3>
@@ -149,6 +154,10 @@
                     <div class="space-y-1">
                         <label class="text-[10px] text-slate-500">فون نمبر (اختیاری)</label>
                         <input type="text" id="store-phone-input" class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-amber-400/50 english-font" dir="ltr">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-500">ایپ پن کوڈ (سیکیورٹی کے لیے، اختیاری)</label>
+                        <input type="password" id="store-pin-input" placeholder="----" class="w-full px-4 py-3 bg-slate-800/50 text-white text-center tracking-[0.3em] rounded-xl border border-slate-700/30 text-sm outline-none focus:ring-2 focus:ring-amber-400/50 english-font" dir="ltr">
                     </div>
                     <div class="space-y-1">
                         <label class="text-[10px] text-slate-500">اسٹور کا پتہ</label>
@@ -172,46 +181,14 @@
             </div>
         </section>
 
-        <!-- Quick Categories -->
+        <!-- Dynamic Categories -->
         <section class="space-y-4 urdu-font">
-            <h3 class="text-lg font-bold px-2 text-slate-200">کیٹیگریز</h3>
-            <div class="grid grid-cols-4 gap-4">
-                <a href="inventory.html?cat=Dinner Set" class="flex flex-col items-center gap-2">
-                    <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center group hover:bg-amber-400 transition-all">
-                        <span class="material-symbols-outlined text-slate-500 group-hover:text-slate-900 transition-colors">restaurant</span>
-                    </div>
-                    <span class="text-[10px] font-bold text-slate-400">ڈنر سیٹ</span>
-                </a>
-                <a href="inventory.html?cat=Tea Set" class="flex flex-col items-center gap-2">
-                    <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center group hover:bg-amber-400 transition-all">
-                        <span class="material-symbols-outlined text-slate-500 group-hover:text-slate-900 transition-colors">coffee</span>
-                    </div>
-                    <span class="text-[10px] font-bold text-slate-400">ٹی سیٹ</span>
-                </a>
-                <a href="inventory.html?cat=Glassware" class="flex flex-col items-center gap-2">
-                    <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center group hover:bg-amber-400 transition-all">
-                        <span class="material-symbols-outlined text-slate-500 group-hover:text-slate-900 transition-colors">wine_bar</span>
-                    </div>
-                    <span class="text-[10px] font-bold text-slate-400">گلاس ویئر</span>
-                </a>
-                <a href="inventory.html?cat=Kitchenware" class="flex flex-col items-center gap-2">
-                    <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center group hover:bg-amber-400 transition-all">
-                        <span class="material-symbols-outlined text-slate-500 group-hover:text-slate-900 transition-colors">flatware</span>
-                    </div>
-                    <span class="text-[10px] font-bold text-slate-400">کٹلری</span>
-                </a>
-                <a href="reports.html" class="flex flex-col items-center gap-2">
-                    <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center group hover:bg-emerald-400 transition-all">
-                        <span class="material-symbols-outlined text-slate-500 group-hover:text-slate-900 transition-colors">analytics</span>
-                    </div>
-                    <span class="text-[10px] font-bold text-slate-400">رپورٹس</span>
-                </a>
-                <a href="expenses.html" class="flex flex-col items-center gap-2">
-                    <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center group hover:bg-rose-500 transition-all">
-                        <span class="material-symbols-outlined text-slate-500 group-hover:text-slate-900 transition-colors">payments</span>
-                    </div>
-                    <span class="text-[10px] font-bold text-slate-400">اخراجات</span>
-                </a>
+            <div class="flex justify-between items-center px-2">
+                <h3 class="text-lg font-bold text-slate-200">کیٹیگریز</h3>
+                <a href="inventory.html" class="text-slate-500 text-xs hover:text-amber-400 transition-colors">انتظام کریں</a>
+            </div>
+            <div id="dashboard-categories" class="grid grid-cols-4 gap-4">
+                <!-- Dynamic display -->
             </div>
         </section>
 
@@ -247,6 +224,7 @@
 
     <script src="data.js"></script>
     <script src="sync.js"></script>
+    <script src="ui.js"></script>
     <script>
         function updateDashboard() {
             const profile = AppData.getProfile();
@@ -264,6 +242,33 @@
             
             document.getElementById('today-sales').innerText = `Rs. ${totalSales.toLocaleString()}`;
             document.getElementById('today-profit').innerText = `Rs. ${totalProfit.toLocaleString()}`;
+
+            // Render Dynamic Categories
+            const categories = AppData.getCategories();
+            const catContainer = document.getElementById('dashboard-categories');
+            if (catContainer) {
+                catContainer.innerHTML = categories.map(cat => `
+                    <a href="inventory.html?cat=${encodeURIComponent(cat)}" class="flex flex-col items-center gap-2">
+                        <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center group hover:bg-amber-400 transition-all">
+                            <span class="material-symbols-outlined text-slate-500 group-hover:text-slate-900 transition-colors">category</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 truncate w-full text-center">${cat}</span>
+                    </a>
+                `).join('') + `
+                    <a href="reports.html" class="flex flex-col items-center gap-2">
+                        <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center group hover:bg-emerald-400 transition-all">
+                            <span class="material-symbols-outlined text-slate-500 group-hover:text-slate-900 transition-colors">analytics</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400">رپورٹس</span>
+                    </a>
+                    <a href="expenses.html" class="flex flex-col items-center gap-2">
+                        <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center group hover:bg-rose-500 transition-all">
+                            <span class="material-symbols-outlined text-slate-500 group-hover:text-slate-900 transition-colors">payments</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400">اخراجات</span>
+                    </a>
+                `;
+            }
 
             const inventory = AppData.getInventory();
             const lowStock = inventory.filter(item => item.stock <= 5);
@@ -295,8 +300,9 @@
         }
         function showSettingsModal() {
             const profile = AppData.getProfile();
-            document.getElementById('store-name-input').value = profile.name;
+            document.getElementById('store-name-input').value = profile.name || '';
             document.getElementById('store-phone-input').value = profile.phone || '';
+            document.getElementById('store-pin-input').value = profile.pin || '';
             document.getElementById('store-address-input').value = profile.address || '';
             document.getElementById('settings-modal').classList.remove('hidden');
         }
@@ -313,36 +319,65 @@
                     ...profile,
                     name: document.getElementById('store-name-input').value,
                     phone: document.getElementById('store-phone-input').value,
+                    pin: document.getElementById('store-pin-input').value,
                     address: document.getElementById('store-address-input').value
                 };
                 AppData.updateProfile(newProfile);
                 updateDashboard();
                 hideSettingsModal();
-                showToast('سیٹنگز محفوظ ہو گئی ہیں!');
+                UI.showToast('سیٹنگز محفوظ ہو گئی ہیں!');
             } catch (err) {
                 console.error(err);
                 alert('سیٹنگز محفوظ کرنے میں مسئلہ آیا!');
             }
         }
         
-        function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 bg-slate-800 text-amber-400 px-6 py-3 rounded-2xl shadow-2xl border border-amber-400/20 text-xs font-bold z-[200] animate-in fade-in slide-in-from-bottom-4 duration-300';
-            toast.innerText = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.add('animate-out', 'fade-out', 'slide-out-to-bottom-4');
-                setTimeout(() => toast.remove(), 300);
-            }, 2000);
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(reg => console.log('SW Registered')).catch(err => console.log('SW Failed', err));
-            });
-        }
 
         updateDashboard();
+        
+        function handleDashboardSearch() {
+            const query = document.getElementById('dashboard-search').value.toLowerCase();
+            const dropdown = document.getElementById('search-results-dropdown');
+            
+            if (query.length < 1) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            const inventory = AppData.getInventory();
+            const results = inventory.filter(item => 
+                item.name.toLowerCase().includes(query) || 
+                item.id.toLowerCase().includes(query)
+            ).slice(0, 8); // Limit to 8 for performance
+
+            if (results.length === 0) {
+                dropdown.innerHTML = '<div class="p-4 text-center text-slate-500 text-xs italic">کوئی آئٹم نہیں ملا...</div>';
+            } else {
+                dropdown.innerHTML = results.map(item => `
+                    <div onclick="window.location.href='inventory.html?id=${item.id}'" class="flex items-center gap-3 p-3 hover:bg-slate-800 rounded-xl cursor-pointer group transition-all">
+                        <div class="w-10 h-10 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
+                            <img src="${item.image}" class="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0">
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="text-xs font-bold text-slate-200">${item.name}</h4>
+                            <p class="text-[9px] text-slate-500 english-font">${item.id} • Rs. ${item.price.toLocaleString()}</p>
+                        </div>
+                        <span class="material-symbols-outlined text-slate-600 group-hover:text-amber-400 text-sm">arrow_forward</span>
+                    </div>
+                `).join('');
+            }
+            dropdown.classList.remove('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('search-results-dropdown');
+            const searchInput = document.getElementById('dashboard-search');
+            if (dropdown && !dropdown.contains(e.target) && e.target !== searchInput) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
         async function handleManualSync() {
             const btn = document.getElementById('sync-icon');
             btn.parentElement.classList.add('opacity-50');
@@ -362,71 +397,6 @@
             }
         }
 
-        function highlightNav() {
-            const path = window.location.pathname.toLowerCase();
-            const links = document.querySelectorAll('nav a');
-            links.forEach(link => {
-                const href = link.getAttribute('href').toLowerCase();
-                if (path.includes(href) || (href === 'index.html' && (path.endsWith('/') || path.endsWith('index.html')))) {
-                    link.classList.remove('text-slate-500', 'text-amber-400');
-                    link.classList.add('text-amber-400');
-                    const icon = link.querySelector('.material-symbols-outlined');
-                    if (icon) icon.style.fontVariationSettings = "'FILL' 1";
-                } else {
-                    link.classList.remove('text-slate-500', 'text-amber-400');
-                    link.classList.add('text-slate-500');
-                    const icon = link.querySelector('.material-symbols-outlined');
-                    if (icon) icon.style.fontVariationSettings = "'FILL' 0";
-                }
-            });
-        }
-        highlightNav();
-
-        // PWA Install Logic
-        let deferredPrompt;
-        const installBtn = document.getElementById('install-btn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
-            e.preventDefault();
-            // Stash the event so it can be triggered later.
-            deferredPrompt = e;
-            // Update UI to notify the user they can add to home screen
-            installBtn.classList.remove('hidden');
-        });
-
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                // Show the install prompt
-                deferredPrompt.prompt();
-                // Wait for the user to respond to the prompt
-                const { outcome } = await deferredPrompt.userChoice;
-                // We've used the prompt, and can't use it again, throw it away
-                deferredPrompt = null;
-                // Hide our custom install button
-                installBtn.classList.add('hidden');
-            }
-        });
-
-        window.addEventListener('appinstalled', (evt) => {
-            // Log install to analytics
-            console.log('INSTALL: Success');
-            installBtn.classList.add('hidden');
-        });
-
-        // Hide install button if app is already running in standalone mode
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            installBtn.classList.add('hidden');
-        }
-        function confirmExit() {
-            if (confirm("کیا آپ واقعی ایپ سے باہر نکلنا چاہتے ہیں؟")) {
-                window.close();
-                // Browsers often block window.close() unless opened by script
-                setTimeout(() => {
-                    alert("براہ کرم ایپ بند کرنے کے لیے اس ٹیب یا ونڈو کو خود بند کر دیں۔");
-                }, 500);
-            }
-        }
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

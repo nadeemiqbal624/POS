@@ -304,6 +304,7 @@
     <!-- Functional Scripts -->
     <script src="data.js"></script>
     <script src="sync.js"></script>
+    <script src="ui.js"></script>
     <script>
         let cart = [];
         let inventory = [];
@@ -635,27 +636,7 @@
 
         // Initialize display
         inventory = AppData.getInventory();
-        renderCart();
-
-        function highlightNav() {
-            const path = window.location.pathname.toLowerCase();
-            const links = document.querySelectorAll('nav a');
-            links.forEach(link => {
-                const href = link.getAttribute('href').toLowerCase();
-                if (path.includes(href) || (href === 'index.html' && (path.endsWith('/') || path.endsWith('index.html')))) {
-                    link.classList.remove('text-slate-500', 'text-amber-400');
-                    link.classList.add('text-amber-400');
-                    const icon = link.querySelector('.material-symbols-outlined');
-                    if (icon) icon.style.fontVariationSettings = "'FILL' 1";
-                } else {
-                    link.classList.remove('text-slate-500', 'text-amber-400');
-                    link.classList.add('text-slate-500');
-                    const icon = link.querySelector('.material-symbols-outlined');
-                    if (icon) icon.style.fontVariationSettings = "'FILL' 0";
-                }
-            });
-        }
-        highlightNav();
+    </script>
         initPOS();
     </script>
 </body>

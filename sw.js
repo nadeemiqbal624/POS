@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-business-pos-v6';
+const CACHE_NAME = 'my-business-pos-v7';
 const ASSETS = [
   './',
   'index.html',
@@ -10,6 +10,7 @@ const ASSETS = [
   'reports.html',
   'data.js',
   'sync.js',
+  'ui.js',
   'manifest.json',
   'icon-192.png',
   'icon-512.png',
@@ -21,7 +22,15 @@ const ASSETS = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(cache => {
+      return Promise.all(
+        ASSETS.map(url => {
+          return cache.add(url).catch(err => {
+            console.error('Failed to cache:', url, err);
+          });
+        })
+      );
+    })
   );
   self.skipWaiting();
 });
@@ -32,20 +41,31 @@ self.addEventListener('activate', event => {
       keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
     ))
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       if (cachedResponse) return cachedResponse;
+      
       return fetch(event.request).then(response => {
         // Cache new successful requests for faster next load
-        if (response.ok && event.request.method === 'GET') {
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+        // Avoid caching opaque Google API responses that might fail offline if not handled properly
+        if (response && response.status === 200 && event.request.method === 'GET') {
+          // Only cache http/https
+          if (event.request.url.startsWith('http')) {
+            const resClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+          }
         }
         return response;
+      }).catch(error => {
+        // Fallback to index.html ONLY for HTML navigation requests
+        if (event.request.mode === 'navigate') {
+          return caches.match('index.html');
+        }
       });
-    }).catch(() => caches.match('index.html'))
+    })
   );
 });

@@ -89,16 +89,38 @@ function updateSyncUI(state) {
     const iconBg = document.getElementById('sync-icon-bg');
     const icon = document.getElementById('sync-icon');
 
+    if (!btn || !status || !iconBg || !icon) return;
+
+    // Reset states
+    icon.className = 'material-symbols-outlined';
+    iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center';
+    status.classList.remove('text-slate-500', 'text-emerald-400', 'text-amber-400', 'text-slate-400');
+
     if (state === 'connected') {
         btn.innerHTML = `<span class="material-symbols-outlined text-sm">sync</span> اپ ڈیٹ کریں`;
         status.innerText = 'منسلک اور محفوظ';
-        status.classList.replace('text-slate-500', 'text-emerald-400');
-        iconBg.classList.replace('bg-slate-700', 'bg-emerald-500/20');
-        icon.classList.replace('text-slate-400', 'text-emerald-400');
+        status.classList.add('text-emerald-400');
+        iconBg.classList.add('bg-emerald-500/20');
+        icon.classList.add('text-emerald-400');
         icon.innerText = 'cloud_done';
     } else if (state === 'syncing') {
         status.innerText = 'سنک ہو رہا ہے...';
-        icon.classList.add('animate-spin');
+        status.classList.add('text-amber-400');
+        iconBg.classList.add('bg-amber-400/20');
+        icon.classList.add('text-amber-400', 'animate-spin');
+        icon.innerText = 'sync';
+    } else if (state === 'pending') {
+        status.innerText = 'محفوظ کرنے کا انتظار...';
+        status.classList.add('text-amber-400');
+        iconBg.classList.add('bg-amber-400/10');
+        icon.classList.add('text-amber-400', 'animate-pulse');
+        icon.innerText = 'cloud_upload';
+    } else {
+        status.innerText = 'منسلک نہیں ہے';
+        status.classList.add('text-slate-500');
+        iconBg.classList.add('bg-slate-700');
+        icon.classList.add('text-slate-400');
+        icon.innerText = 'cloud_off';
     }
 }
 
@@ -151,7 +173,11 @@ async function restoreFromDrive() {
     }
 }
 
+let isSyncing = false; // Prevent overlapping syncs
+
 async function performFullSync() {
+    if (isSyncing) return; // Prevent double trigger
+    isSyncing = true;
     updateSyncUI('syncing');
     
     // Get local data
@@ -207,31 +233,43 @@ async function performFullSync() {
         localStorage.setItem('yc_last_sync', Date.now());
     } catch (err) {
         console.error('Sync failed', err);
-        alert('سنکنگ میں خرابی پیش آئی!');
+        // Maybe token expired, don't alert spam in autoSync, just update UI
+        updateSyncUI('connected'); 
+    } finally {
+        isSyncing = false;
     }
 }
+
+let syncTimeout = null;
 
 // Auto-sync function to be called from data.js
 async function autoSync() {
     if (!gapi.client || !gisInited) return;
 
-    const currentToken = gapi.client.getToken();
-    
-    if (currentToken) {
-        await performFullSync();
-    } else if (!isAuthenticating) {
-        // Try to get token without prompt (silent)
-        isAuthenticating = true;
-        try {
-            tokenClient.callback = async (resp) => {
+    if (syncTimeout) clearTimeout(syncTimeout);
+
+    updateSyncUI('pending'); // Show wait indicator
+
+    syncTimeout = setTimeout(async () => {
+        const currentToken = gapi.client.getToken();
+        
+        if (currentToken) {
+            await performFullSync();
+        } else if (!isAuthenticating) {
+            // Try to get token without prompt (silent)
+            isAuthenticating = true;
+            try {
+                tokenClient.callback = async (resp) => {
+                    isAuthenticating = false;
+                    if (resp.error !== undefined) return;
+                    updateSyncUI('connected');
+                    await performFullSync();
+                };
+                tokenClient.requestAccessToken({ prompt: '' });
+            } catch (err) {
                 isAuthenticating = false;
-                if (resp.error !== undefined) return;
-                updateSyncUI('connected');
-                await performFullSync();
-            };
-            tokenClient.requestAccessToken({ prompt: '' });
-        } catch (err) {
-            isAuthenticating = false;
+            }
         }
-    }
+    }, 4000); // Wait 4 seconds after last change
 }
+
