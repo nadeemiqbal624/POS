@@ -32,6 +32,21 @@
             margin-left: auto;
             margin-right: auto;
         }
+        @media print {
+            body * { visibility: hidden; }
+            #khata-print-area, #khata-print-area * { visibility: visible; }
+            #khata-print-area {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                color: black !important;
+                background: white !important;
+            }
+            .no-print { display: none !important; }
+        }
+        #khata-print-area { display: none; }
     </style>
 </head>
 <body class="text-slate-100 pb-24">
@@ -131,13 +146,23 @@
     <div id="history-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
         <div class="bg-slate-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center mb-6 urdu-font">
-                <div>
-                    <h3 class="text-lg font-bold text-white">کھاتہ تفصیل (Ledger)</h3>
-                    <p id="history-cust-name" class="text-xs text-slate-400 mt-1"></p>
+                <div class="flex items-center gap-2">
+                    <div class="text-right">
+                        <h3 class="text-lg font-bold text-white">کھاتہ تفصیل (Ledger)</h3>
+                        <p id="history-cust-name" class="text-xs text-slate-400 mt-1"></p>
+                    </div>
                 </div>
-                <button onclick="hideHistory()" class="text-slate-500 hover:text-white transition-colors">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button id="print-khata-btn" class="bg-slate-800 text-slate-300 p-2 rounded-xl hover:bg-slate-700 transition-all" title="پرنٹ">
+                        <span class="material-symbols-outlined text-sm">print</span>
+                    </button>
+                    <button id="wa-khata-btn" class="bg-emerald-500/10 text-emerald-500 p-2 rounded-xl hover:bg-emerald-500 hover:text-white transition-all" title="وٹس ایپ">
+                        <span class="material-symbols-outlined text-sm">share</span>
+                    </button>
+                    <button onclick="hideHistory()" class="text-slate-500 hover:text-white transition-colors p-2">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
             </div>
             
             <div id="history-list" class="flex-grow overflow-y-auto space-y-3 urdu-font pr-2">
@@ -148,6 +173,51 @@
                 <span class="text-slate-400 text-sm">مجموعی واجب الادا:</span>
                 <span id="history-total-balance" class="text-xl font-bold english-font text-rose-400"></span>
             </div>
+        </div>
+    </div>
+    
+    <!-- Hidden Print Area for Ledger -->
+    <div id="khata-print-area" class="p-8 text-slate-900 bg-white urdu-font">
+        <div class="text-center border-b-2 border-slate-900 pb-4 mb-6">
+            <h1 id="print-biz-name" class="text-2xl font-bold">بزنس نام</h1>
+            <p id="print-biz-info" class="text-xs opacity-70"></p>
+            <h2 class="text-xl font-bold mt-4 bg-slate-100 py-2">کھاتہ لیجر (Customer Ledger)</h2>
+        </div>
+        
+        <div class="flex justify-between mb-6 border-b pb-4">
+            <div>
+                <p class="text-[10px] text-slate-500">کسٹمر تفصیل:</p>
+                <h3 id="print-cust-name-val" class="text-lg font-bold">کسٹمر نام</h3>
+                <p id="print-cust-phone-val" class="english-font text-sm"></p>
+            </div>
+            <div class="text-left">
+                <p class="text-[10px] text-slate-500">رپورٹ کی تاریخ:</p>
+                <p id="print-report-date" class="english-font text-sm font-bold"></p>
+            </div>
+        </div>
+
+        <table class="w-full text-xs mb-8 border-collapse">
+            <thead>
+                <tr class="bg-slate-900 text-white">
+                    <th class="border border-slate-300 p-2 text-right">تاریخ</th>
+                    <th class="border border-slate-300 p-2 text-right">تفصیل</th>
+                    <th class="border border-slate-300 p-2 text-center">قسم</th>
+                    <th class="border border-slate-300 p-2 text-left">رقم (Rs.)</th>
+                </tr>
+            </thead>
+            <tbody id="print-khata-tbody">
+                <!-- Rows here -->
+            </tbody>
+            <tfoot>
+                <tr class="font-bold bg-slate-50">
+                    <td colspan="3" class="border border-slate-300 p-3 text-right text-sm">مجموعی واجب الادا (Current Balance)</td>
+                    <td id="print-final-balance" class="border border-slate-300 p-3 text-left text-sm english-font text-rose-600"></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="text-center mt-12 pt-8 border-t border-dashed border-slate-300">
+            <p class="text-[10px] italic">یہ کمپیوٹر سے تیار کردہ رپورٹ ہے اور اس کے لیے دستخط کی ضرورت نہیں ہے۔</p>
         </div>
     </div>
 
@@ -273,6 +343,69 @@
                 `).join('');
             }
             document.getElementById('history-modal').classList.remove('hidden');
+
+            // Setup Print/Share Actions
+            document.getElementById('print-khata-btn').onclick = () => printKhataReport(name);
+            document.getElementById('wa-khata-btn').onclick = () => shareKhataWhatsApp(name);
+        }
+
+        function printKhataReport(name) {
+            const customer = AppData.getKhata().find(c => c.name === name);
+            const profile = AppData.getProfile();
+            
+            if (!customer) return;
+
+            // Populate Print Area
+            document.getElementById('print-biz-name').innerText = profile.name;
+            document.getElementById('print-biz-info').innerText = `${profile.address || ''} | ${profile.phone || ''}`;
+            document.getElementById('print-cust-name-val').innerText = customer.name;
+            document.getElementById('print-cust-phone-val').innerText = customer.phone || '';
+            document.getElementById('print-report-date').innerText = new Date().toLocaleDateString('ur-PK');
+            document.getElementById('print-final-balance').innerText = "Rs. " + customer.balance.toLocaleString();
+
+            const tbody = document.getElementById('print-khata-tbody');
+            tbody.innerHTML = (customer.transactions || []).map(t => `
+                <tr>
+                    <td class="border border-slate-300 p-2 english-font">${t.date}</td>
+                    <td class="border border-slate-300 p-2">${t.details}</td>
+                    <td class="border border-slate-300 p-2 text-center text-[10px]">${t.type === 'Purchase' ? 'خریداری' : 'وصولی'}</td>
+                    <td class="border border-slate-300 p-2 text-left english-font ${t.type === 'Purchase' ? 'text-rose-600' : 'text-emerald-600'}">
+                        ${t.type === 'Purchase' ? '+' : '-'} ${t.amount.toLocaleString()}
+                    </td>
+                </tr>
+            `).join('');
+
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        }
+
+        function shareKhataWhatsApp(name) {
+            const customer = AppData.getKhata().find(c => c.name === name);
+            const profile = AppData.getProfile();
+            if (!customer) return;
+
+            let msg = `*📊 کھاتہ لیجر (Ledger Report)*\n`;
+            msg += `*🏢 ${profile.name}*\n`;
+            msg += `--------------------------\n`;
+            msg += `👤 کسٹمر: ${customer.name}\n`;
+            msg += `💰 *بقایا بیلنس: Rs. ${customer.balance.toLocaleString()}*\n`;
+            msg += `📅 تاریخ: ${new Date().toLocaleDateString('ur-PK')}\n`;
+            msg += `--------------------------\n`;
+            msg += `*آخری 5 ٹرانزیکشنز:*\n`;
+
+            const last5 = (customer.transactions || []).slice(-5).reverse();
+            last5.forEach(t => {
+                msg += `${t.type === 'Purchase' ? '🔴' : '🟢'} ${t.date}: Rs. ${t.amount.toLocaleString()} (${t.details})\n`;
+            });
+
+            msg += `--------------------------\n`;
+            if (profile.phone) msg += `📞 رابطہ: ${profile.phone}\n`;
+            msg += `\nشکریہ!`;
+
+            const phone = (customer.phone || '').replace(/\D/g, '');
+            const url = `https://wa.me/${phone.startsWith('92') ? phone : '92' + phone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
         }
 
         function hideHistory() { document.getElementById('history-modal').classList.add('hidden'); }

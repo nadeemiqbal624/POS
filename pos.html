@@ -118,11 +118,18 @@
                 <span>ذیلی کل (Subtotal)</span>
                 <span id="subtotal" class="english-font">Rs. 0</span>
             </div>
-            <div class="flex justify-between items-center text-sm">
-                <div class="flex items-center gap-3">
-                    <span class="text-amber-400">ڈسکاؤنٹ (%)</span>
-                    <input type="number" id="discount-pct" value="0" oninput="calculateTotals()" class="w-16 bg-white/5 rounded-lg px-2 py-1 text-center text-xs outline-none focus:bg-white/10 transition-all border border-white/10">
+            <div class="grid grid-cols-2 gap-4 items-center text-sm">
+                <div class="flex flex-col gap-1">
+                    <span class="text-amber-400 text-[10px]">ڈسکاؤنٹ (%)</span>
+                    <input type="number" id="discount-pct" value="0" oninput="calculateTotals()" class="w-full bg-white/5 rounded-lg px-2 py-1.5 text-center text-xs outline-none focus:bg-white/10 transition-all border border-white/10 english-font">
                 </div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-amber-400 text-[10px]">ڈسکاؤنٹ (رقم)</span>
+                    <input type="number" id="discount-fix" value="0" oninput="calculateTotals()" class="w-full bg-white/5 rounded-lg px-2 py-1.5 text-center text-xs outline-none focus:bg-white/10 transition-all border border-white/10 english-font">
+                </div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] italic opacity-60">
+                <span>کل ڈسکاؤنٹ:</span>
                 <span id="discount-amt" class="english-font text-rose-400 font-bold">- Rs. 0</span>
             </div>
             <div class="h-[1px] bg-white/5 my-4"></div>
@@ -490,11 +497,15 @@
         function calculateTotals() {
             const subtotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
             const discountPct = parseFloat(document.getElementById('discount-pct').value) || 0;
-            const discountAmt = (subtotal * discountPct) / 100;
-            const finalTotal = subtotal - discountAmt;
+            const discountFix = parseFloat(document.getElementById('discount-fix').value) || 0;
+            
+            const pctDiscountAmt = (subtotal * discountPct) / 100;
+            const totalDiscount = pctDiscountAmt + discountFix;
+            
+            const finalTotal = Math.max(0, subtotal - totalDiscount);
 
             document.getElementById('subtotal').innerText = `Rs. ${subtotal.toLocaleString()}`;
-            document.getElementById('discount-amt').innerText = `- Rs. ${discountAmt.toLocaleString()}`;
+            document.getElementById('discount-amt').innerText = `- Rs. ${totalDiscount.toLocaleString()}`;
             document.getElementById('final-total').innerText = `Rs. ${finalTotal.toLocaleString()}`;
         }
 
@@ -507,8 +518,12 @@
             const name = document.getElementById('cust-name').value || 'واک ان کسٹمر';
             const phone = document.getElementById('cust-phone').value || '';
             const subtotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-            const discount = parseFloat(document.getElementById('discount-pct').value) || 0;
-            const total = subtotal - (subtotal * discount / 100);
+            const discountPct = parseFloat(document.getElementById('discount-pct').value) || 0;
+            const discountFix = parseFloat(document.getElementById('discount-fix').value) || 0;
+            
+            const pctDiscountAmt = (subtotal * discountPct) / 100;
+            const totalDiscount = pctDiscountAmt + discountFix;
+            const total = Math.max(0, subtotal - totalDiscount);
 
             // Record Sale
             const sale = {
@@ -516,7 +531,9 @@
                 phone: phone,
                 items: cart,
                 subtotal: subtotal,
-                discount: discount,
+                discountPct: discountPct,
+                discountFix: discountFix,
+                totalDiscount: totalDiscount,
                 total: total,
                 payment: method,
                 date: new Date().toLocaleString('ur-PK')
@@ -545,6 +562,7 @@
             document.getElementById('cust-name').value = '';
             document.getElementById('cust-phone').value = '';
             document.getElementById('discount-pct').value = 0;
+            document.getElementById('discount-fix').value = 0;
             inventory = AppData.getInventory(); // Refresh local inventory
             renderCart();
         }
@@ -595,10 +613,10 @@
             });
 
             document.getElementById('print-subtotal').innerText = "Rs. " + sale.subtotal.toLocaleString();
-            const discAmt = (sale.subtotal * sale.discount / 100);
-            if (discAmt > 0) {
+            
+            if (sale.totalDiscount > 0) {
                 document.getElementById('print-discount-row').classList.remove('hidden');
-                document.getElementById('print-discount').innerText = "Rs. " + discAmt.toLocaleString();
+                document.getElementById('print-discount').innerText = "Rs. " + sale.totalDiscount.toLocaleString();
             } else {
                 document.getElementById('print-discount-row').classList.add('hidden');
             }
@@ -624,7 +642,9 @@
 
             msg += `--------------------------\n`;
             msg += `💰 ذیلی کل: Rs. ${sale.subtotal.toLocaleString()}\n`;
-            if (sale.discount > 0) msg += `📉 ڈسکاؤنٹ: ${sale.discount}%\n`;
+            if (sale.discountPct > 0) msg += `📉 ڈسکاؤنٹ (${sale.discountPct}%): Rs. ${((sale.subtotal * sale.discountPct)/100).toLocaleString()}\n`;
+            if (sale.discountFix > 0) msg += `📉 ڈسکاؤنٹ (نقد): Rs. ${sale.discountFix.toLocaleString()}\n`;
+            if (sale.totalDiscount > 0 && sale.discountPct > 0 && sale.discountFix > 0) msg += `🏷️ کل ڈسکاؤنٹ: Rs. ${sale.totalDiscount.toLocaleString()}\n`;
             msg += `*✅ کل رقم: Rs. ${sale.total.toLocaleString()}*\n`;
             msg += `💳 طریقہ ادائیگی: ${sale.payment === 'Cash' ? 'نقدی (Cash)' : 'ادھار (Khata)'}\n`;
             msg += `--------------------------\n`;
