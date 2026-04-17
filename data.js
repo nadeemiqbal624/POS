@@ -3,8 +3,6 @@
  * Handles localStorage persistence for Inventory, Sales, and Khata.
  */
 
-alert("Data.js Loaded Successfully");
-
 const AppData = {
     // Initial Data (Empty for production)
     initialInventory: [],
@@ -234,11 +232,8 @@ const AppData = {
         let inv = this.getInventory();
         inv.push(item);
         localStorage.setItem('yc_inventory', JSON.stringify(inv));
-        alert("Data.js: addInventory مکمل، اب سنک بلا رہا ہوں...");
         if (typeof autoSync === 'function') {
             autoSync();
-        } else {
-            alert("ایرر: سنک انجن (sync.js) لوڈ نہیں ہوا!");
         }
         return item;
     },

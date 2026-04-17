@@ -4,12 +4,11 @@
  */
 
 const SYNC_CONFIG = {
-    CLIENT_ID: '639694745913-bnetaj2roioqvc3dg7diaiec0c62c9eo.apps.googleusercontent.com', // User provided ID
+    CLIENT_ID: '639694745913-bnetaj2roioqvc3dg7diaiec0c62c9eo.apps.googleusercontent.com',
     SCOPES: 'https://www.googleapis.com/auth/drive.file',
     DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
     FILE_NAME: 'pos_backup_yc.json'
 };
-alert("Sync.js Loaded Successfully");
 
 let tokenClient;
 let gapiInited = false;
@@ -363,33 +362,17 @@ async function performFullSync() {
 
 let syncTimeout = null;
 
-// Auto-sync function to be called from data.js
 async function autoSync() {
-    alert("AutoSync: Step 1 - Triggered");
-    if (typeof gapi === 'undefined') {
-        alert("Sync Error: گوگل سروسز لوڈ نہیں ہوئیں!");
-        return;
-    }
-    if (!gapi.client || !gisInited || !isCloudSetupComplete) {
-        console.log("AutoSync: Blocked", { client: !!gapi.client, gis: gisInited, setup: isCloudSetupComplete });
-        if (!gapi.client) alert("Sync Error: GAPI لوڈ نہیں ہوا");
-        else if (!gisInited) alert("Sync Error: GIS لوڈ نہیں ہوا");
-        else if (!isCloudSetupComplete) alert("Sync Error: لاگ ان نہیں ہے");
-        return;
-    }
-
-    alert("AutoSync: Step 2 - Setting Timeout");
+    if (syncTimeout) clearTimeout(syncTimeout);
     try {
         updateSyncUI('syncing');
     } catch(e) {
         console.error("UI update failed", e);
     }
     syncTimeout = setTimeout(async function() {
-        alert("AutoSync: Step 3 - Logic starting...");
         try {
-            if (!gapi.client) { alert("Error: GAPI client missing!"); return; }
+            if (!gapi.client) return;
             const token = gapi.client.getToken();
-            alert("AutoSync: Step 4 - Token is " + (token ? "OK" : "MISSING"));
             
             if (!token) {
                 tokenClient.requestAccessToken({ prompt: '' });
@@ -397,8 +380,8 @@ async function autoSync() {
             }
             await performFullSync();
         } catch (e) {
-            alert("AutoSync Callback Error: " + e.message);
+            console.error("Sync background error", e);
         }
-    }, 1500);
+    }, 2000);
 }
 
