@@ -340,21 +340,24 @@
             }
 
             if (currentTab === 'sales') {
-                container.innerHTML = items.reverse().map(s => `
-                    <div onclick="showSaleDetail('${s.id}')" class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 flex justify-between items-center transition-all hover:bg-slate-800/60 cursor-pointer group">
+                container.innerHTML = [...items].reverse().map((s, idx) => {
+                    const fallbackId = `fallback-${items.length - 1 - idx}`;
+                    const saleId = s.id || fallbackId;
+                    return `
+                    <div onclick="showSaleDetail('${saleId}', ${items.length - 1 - idx})" class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 flex justify-between items-center transition-all hover:bg-slate-800/60 cursor-pointer group">
                         <div>
                             <h4 class="font-bold text-xs text-slate-200 group-hover:text-amber-400 transition-colors">${s.customer}</h4>
-                            <p class="text-[9px] text-slate-500">${s.date} • ${s.items.length} اشیاء</p>
+                            <p class="text-[9px] text-slate-500">${s.date} • ${(s.items || []).length} اشیاء</p>
                         </div>
                         <div class="text-left flex items-center gap-3">
                             <div class="text-left">
-                                <span class="text-xs font-bold text-amber-400 block english-font">Rs. ${s.total.toLocaleString()}</span>
+                                <span class="text-xs font-bold text-amber-400 block english-font">Rs. ${(s.total || 0).toLocaleString()}</span>
                                 <span class="text-[8px] text-emerald-500 english-font font-bold">P: Rs. ${(s.profit || 0).toLocaleString()}</span>
                             </div>
                             <span class="material-symbols-outlined text-slate-600 text-sm group-hover:text-amber-400 transition-colors">visibility</span>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             } else {
                 container.innerHTML = items.reverse().map(e => `
                     <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 flex justify-between items-center transition-all hover:bg-slate-800/60">
@@ -368,23 +371,52 @@
             }
         }
 
-        function showSaleDetail(id) {
-            const sale = AppData.getSales().find(s => s.id == id);
+        function showSaleDetail(id, fallbackIdx) {
+            const allSales = AppData.getSales();
+            let sale = allSales.find(s => s.id == id);
+            
+            // Fallback for older records without ID
+            if (!sale && fallbackIdx !== undefined) {
+                // Filter sales by current date range to match what's rendered
+                const fromStr = document.getElementById('date-from').value;
+                const toStr = document.getElementById('date-to').value;
+                const from = new Date(fromStr);
+                const to = new Date(toStr);
+                to.setHours(23, 59, 59);
+                
+                const filteredSales = allSales.filter(s => {
+                    const d = parseDate(s.date);
+                    return d >= from && d <= to;
+                });
+                sale = filteredSales[fallbackIdx];
+            }
+
             if (!sale) return;
 
             document.getElementById('detail-invoice-no').innerText = sale.invoiceNo || 'N/A';
-            document.getElementById('detail-subtotal').innerText = `Rs. ${sale.subtotal.toLocaleString()}`;
+            document.getElementById('detail-subtotal').innerText = `Rs. ${(sale.subtotal || 0).toLocaleString()}`;
             
-            const discAmt = (sale.subtotal * (sale.discount || 0)) / 100;
+            let discAmt = 0;
+            let discLabel = "";
+            
+            if (sale.totalDiscount !== undefined) {
+                discAmt = sale.totalDiscount;
+                discLabel = sale.discountPct > 0 ? `(${sale.discountPct}%)` : "";
+            } else if (sale.discount !== undefined) {
+                // Old schema
+                discAmt = (sale.subtotal * (sale.discount || 0)) / 100;
+                discLabel = `(${sale.discount}%)`;
+            }
+
             const discRow = document.getElementById('detail-discount-row');
             if (discAmt > 0) {
                 discRow.classList.remove('hidden');
-                document.getElementById('detail-discount').innerText = `- Rs. ${discAmt.toLocaleString()} (${sale.discount}%)`;
+                document.getElementById('detail-discount').innerText = `- Rs. ${discAmt.toLocaleString()} ${discLabel}`;
             } else {
                 discRow.classList.add('hidden');
             }
 
-            document.getElementById('detail-total').innerText = `Rs. ${sale.total.toLocaleString()}`;
+            document.getElementById('detail-total').innerText = `Rs. ${(sale.total || 0).toLocaleString()}`;
             document.getElementById('detail-customer').innerText = `کسٹمر: ${sale.customer}`;
             document.getElementById('detail-date').innerText = sale.date;
 
