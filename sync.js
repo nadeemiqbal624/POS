@@ -13,7 +13,8 @@ const SYNC_CONFIG = {
 let tokenClient;
 let gapiInited = false;
 let gisInited = false;
-let isAuthenticating = false; // Prevent double auth prompts
+let isAuthenticating = false; 
+let isCloudSetupComplete = localStorage.getItem('yc_cloud_setup') === 'true';
 
 // 1. Initialize API & Identity
 function gapiLoaded() {
@@ -38,31 +39,38 @@ function gisLoaded() {
 
 function checkSyncStatus() {
     if (gapiInited && gisInited) {
-        // Try restoring token from localStorage
         const storedTokenStr = localStorage.getItem('google_access_token');
         if (storedTokenStr) {
             try {
                 const storedToken = JSON.parse(storedTokenStr);
-                // Check if it's valid (with 5 minute buffer)
                 if (storedToken.expiry > Date.now() + 300000) {
                     gapi.client.setToken({ access_token: storedToken.access_token });
-                    updateSyncUI('connected');
+                    updateSyncUI('synced');
+                    checkSetupRequired();
                     return;
-                } else {
-                    localStorage.removeItem('google_access_token');
                 }
             } catch(e) {}
         }
-
-        const token = gapi.client.getToken();
-        if (token) {
-            updateSyncUI('connected');
-        } else {
-            // Try silent login if we've already authorized
+        
+        // If we reached here, token is missing or expired.
+        // Try to refresh silently ONLY if we have already setup cloud
+        if (isCloudSetupComplete && !isAuthenticating) {
             try {
-                autoSync();
+                tokenClient.requestAccessToken({ prompt: '' });
             } catch(e) {}
         }
+        checkSetupRequired();
+    }
+}
+
+function checkSetupRequired() {
+    const overlay = document.getElementById('setup-overlay');
+    if (!overlay) return;
+    
+    if (gapi.client.getToken() || isCloudSetupComplete) {
+        overlay.classList.add('hidden');
+    } else {
+        overlay.classList.remove('hidden');
     }
 }
 
@@ -87,80 +95,24 @@ async function handleSyncAuth() {
 
     tokenClient.callback = async (resp) => {
         if (resp.error !== undefined) throw (resp);
-        // Save token to persist across pages
+        
         localStorage.setItem('google_access_token', JSON.stringify({
             access_token: resp.access_token,
             expiry: Date.now() + (resp.expires_in * 1000)
         }));
+        
         updateSyncUI('connected');
-        // Do NOT auto-sync on first link to avoid overwriting Drive data with empty local data
+        checkSetupRequired();
+
+        // Check for existing backup on first time
+        await checkForExistingBackup();
     };
 
-    if (gapi.client.getToken() === null) {
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-    } else {
-        tokenClient.requestAccessToken({ prompt: '' });
-    }
+    tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
-function updateSyncUI(state) {
-    const btn = document.getElementById('sync-btn');
-    const status = document.getElementById('sync-status');
-    const iconBg = document.getElementById('sync-icon-bg');
-    const icon = document.getElementById('sync-icon');
-
-    if (!btn || !status || !iconBg || !icon) return;
-
-    // Reset states
-    icon.className = 'material-symbols-outlined';
-    iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center';
-    status.classList.remove('text-slate-500', 'text-emerald-400', 'text-amber-400', 'text-slate-400');
-
-    if (state === 'connected') {
-        btn.innerHTML = `<span class="material-symbols-outlined text-sm">sync</span> اپ ڈیٹ کریں`;
-        status.innerText = 'منسلک (اپ ڈیٹ یا ری سٹور کریں)';
-        status.classList.add('text-emerald-400');
-        iconBg.classList.add('bg-emerald-500/20');
-        icon.classList.add('text-emerald-400');
-        icon.innerText = 'cloud_queue';
-    } else if (state === 'syncing') {
-        status.innerText = 'سنک ہو رہا ہے...';
-        status.classList.add('text-amber-400');
-        iconBg.classList.add('bg-amber-400/20');
-        icon.classList.add('text-amber-400', 'animate-spin');
-        icon.innerText = 'sync';
-    } else if (state === 'pending') {
-        status.innerText = 'محفوظ کرنے کا انتظار...';
-        status.classList.add('text-amber-400');
-        iconBg.classList.add('bg-amber-400/10');
-        icon.classList.add('text-amber-400', 'animate-pulse');
-        icon.innerText = 'cloud_upload';
-    } else if (state === 'synced') {
-        status.innerText = 'کلاؤڈ پر محفوظ ہے';
-        status.classList.add('text-emerald-400');
-        iconBg.classList.add('bg-emerald-500/20');
-        icon.classList.add('text-emerald-400');
-        icon.innerText = 'cloud_done';
-    } else {
-        status.innerText = 'منسلک نہیں ہے';
-        status.classList.add('text-slate-500');
-        iconBg.classList.add('bg-slate-700');
-        icon.classList.add('text-slate-400');
-        icon.innerText = 'cloud_off';
-    }
-}
-
-// 3. Drive Operations
-async function restoreFromDrive() {
-    if (!gapi.client || !gapi.client.getToken()) {
-        alert('پہلے گوگل اکاؤنٹ منسلک کریں!');
-        return;
-    }
-
-    if (!confirm('کیا آپ کلاؤڈ سے ڈیٹا ری سٹور کرنا چاہتے ہیں؟ موجودہ لوکل ڈیٹا مٹ جائے گا!')) return;
-
+async function checkForExistingBackup() {
     updateSyncUI('syncing');
-
     try {
         const response = await gapi.client.drive.files.list({
             q: `name = '${SYNC_CONFIG.FILE_NAME}' and trashed = false`,
@@ -168,61 +120,152 @@ async function restoreFromDrive() {
         });
         const files = response.result.files;
 
-        if (files && files.length > 0) {
-            const fileId = files[0].id;
-            const fileResp = await gapi.client.drive.files.get({
-                fileId: fileId,
-                alt: 'media'
-            });
-            
-            let cloudData = fileResp.result;
-            
-            // Handle string response (common with alt: 'media')
-            if (typeof cloudData === 'string') {
-                try {
-                    cloudData = JSON.parse(cloudData);
-                } catch (e) {
-                    console.error("JSON parse error:", e);
-                    alert('کلاؤڈ ڈیٹا فارمیٹ درست نہیں ہے!');
-                    return;
-                }
-            }
-            
-            if (!cloudData || typeof cloudData !== 'object') {
-                alert('بیک اپ فائل خالی یا غیر موزوں ہے!');
-                return;
-            }
-            
-            // Apply to localStorage
-            if (cloudData.inventory) localStorage.setItem('yc_inventory', JSON.stringify(cloudData.inventory));
-            if (cloudData.sales) localStorage.setItem('yc_sales', JSON.stringify(cloudData.sales));
-            if (cloudData.khata) localStorage.setItem('yc_khata', JSON.stringify(cloudData.khata));
-            if (cloudData.suppliers) localStorage.setItem('yc_suppliers', JSON.stringify(cloudData.suppliers));
-            if (cloudData.categories) localStorage.setItem('yc_categories', JSON.stringify(cloudData.categories));
-            if (cloudData.profile) localStorage.setItem('yc_profile', JSON.stringify(cloudData.profile));
-            if (cloudData.expenses) localStorage.setItem('yc_expenses', JSON.stringify(cloudData.expenses));
+        const isLocalEmpty = AppData.getInventory().length === 0 && AppData.getSales().length === 0;
 
-            alert('ڈیٹا کامیابی سے ری سٹور ہو گیا ہے! پیج ری لوڈ ہو رہا ہے...');
-            location.reload();
+        if (files && files.length > 0 && isLocalEmpty) {
+            // Backup found and local is empty - Show choice
+            showRestoreChoiceModal(files[0].id);
         } else {
-            alert('کلاؤڈ پر کوئی بیک اپ موجود نہیں ہے!');
+            // No backup or already has data - Just start syncing
+            localStorage.setItem('yc_cloud_setup', 'true');
+            isCloudSetupComplete = true;
+            await performFullSync();
         }
     } catch (err) {
-        console.error('Restore failed', err);
-        alert('ڈیٹا ری سٹور کرنے میں خرابی پیش آئی!');
-    } finally {
+        console.error('Backup check failed', err);
         updateSyncUI('connected');
     }
 }
 
-let isSyncing = false; // Prevent overlapping syncs
+function showRestoreChoiceModal(fileId) {
+    const modal = document.getElementById('restore-choice-modal');
+    if (!modal) {
+        // Fallback to simple confirm if modal not found
+        if (confirm('گوگل ڈرائیو پر آپ کا پرانا بیک اپ ملا ہے۔ کیا آپ اسے واپس لانا چاہتے ہیں؟')) {
+            restoreConfirmed(fileId);
+        } else {
+            freshStartConfirmed();
+        }
+        return;
+    }
+    
+    window._pendingFileId = fileId;
+    modal.classList.remove('hidden');
+}
+
+async function restoreConfirmed(fileId) {
+    fileId = fileId || window._pendingFileId;
+    await restoreFromDrive(fileId);
+    localStorage.setItem('yc_cloud_setup', 'true');
+    isCloudSetupComplete = true;
+    const modal = document.getElementById('restore-choice-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function freshStartConfirmed() {
+    localStorage.setItem('yc_cloud_setup', 'true');
+    isCloudSetupComplete = true;
+    await performFullSync();
+    const modal = document.getElementById('restore-choice-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function updateSyncUI(state) {
+    const status = document.getElementById('sync-status');
+    const icon = document.getElementById('sync-icon');
+    if (!status || !icon) return;
+
+    if (state === 'synced') {
+        status.innerText = 'گوگل ڈرائیو کے ساتھ سنک ہے';
+        status.className = 'text-[10px] text-emerald-400 font-bold';
+        icon.innerText = 'cloud_done';
+        icon.className = 'material-symbols-outlined text-emerald-400';
+    } else if (state === 'syncing') {
+        status.innerText = 'سنک ہو رہا ہے...';
+        status.className = 'text-[10px] text-amber-400 italic';
+        icon.innerText = 'sync';
+        icon.className = 'material-symbols-outlined text-amber-400 animate-spin';
+    } else if (state === 'connected') {
+        status.innerText = 'منسلک ہے';
+        status.className = 'text-[10px] text-slate-400';
+        icon.innerText = 'cloud_queue';
+        icon.className = 'material-symbols-outlined text-slate-400';
+    } else {
+        status.innerText = 'منسلک نہیں ہے';
+        status.className = 'text-[10px] text-slate-500';
+        icon.innerText = 'cloud_off';
+        icon.className = 'material-symbols-outlined text-slate-500';
+    }
+}
+
+// 3. Drive Operations
+async function restoreFromDrive(fileId) {
+    if (!gapi.client || !gapi.client.getToken()) return;
+
+    updateSyncUI('syncing');
+
+    try {
+        if (!fileId) {
+            const response = await gapi.client.drive.files.list({
+                q: `name = '${SYNC_CONFIG.FILE_NAME}' and trashed = false`,
+                fields: 'files(id, name)',
+            });
+            const files = response.result.files;
+            if (!files || files.length === 0) {
+                alert('کلاؤڈ پر کوئی بیک اپ موجود نہیں ہے!');
+                return;
+            }
+            fileId = files[0].id;
+        }
+
+        const fileResp = await gapi.client.drive.files.get({
+            fileId: fileId,
+            alt: 'media'
+        });
+        
+        // Handle different gapi response structures
+        let cloudData = fileResp.result || fileResp.body;
+        
+        if (typeof cloudData === 'string') {
+            try {
+                cloudData = JSON.parse(cloudData);
+            } catch (e) {
+                console.error("JSON parse error:", e);
+                alert('بیک اپ فائل کا فارمیٹ درست نہیں ہے!');
+                return;
+            }
+        }
+        
+        if (!cloudData || typeof cloudData !== 'object') {
+            alert('بیک اپ فائل خالی ہے!');
+            return;
+        }
+        
+        // Apply to localStorage
+        const keys = ['inventory', 'sales', 'khata', 'suppliers', 'categories', 'profile', 'expenses'];
+        keys.forEach(key => {
+            if (cloudData[key]) {
+                localStorage.setItem(`yc_${key}`, JSON.stringify(cloudData[key]));
+            }
+        });
+
+        alert('ڈیٹا کامیابی سے واپس آ گیا ہے!');
+        location.reload();
+    } catch (err) {
+        console.error('Restore failed', err);
+        alert('واپسی کے عمل میں خرابی پیش آئی!');
+    } finally {
+        updateSyncUI('synced');
+    }
+}
+
+let isSyncing = false;
 
 async function performFullSync() {
-    if (isSyncing) return; // Prevent double trigger
+    if (isSyncing || !gapi.client || !gapi.client.getToken()) return;
     isSyncing = true;
     updateSyncUI('syncing');
     
-    // Get local data
     const localData = {
         inventory: AppData.getInventory(),
         sales: AppData.getSales(),
@@ -235,7 +278,6 @@ async function performFullSync() {
     };
 
     try {
-        // Search for existing backup file
         const response = await gapi.client.drive.files.list({
             q: `name = '${SYNC_CONFIG.FILE_NAME}' and trashed = false`,
             fields: 'files(id, name)',
@@ -244,7 +286,7 @@ async function performFullSync() {
 
         if (files && files.length > 0) {
             const fileId = files[0].id;
-            // Update existing
+            // Update existing using PATCH
             await gapi.client.request({
                 path: `/upload/drive/v3/files/${fileId}`,
                 method: 'PATCH',
@@ -252,22 +294,21 @@ async function performFullSync() {
                 body: JSON.stringify(localData)
             });
         } else {
-            // Create new
-            const metadata = {
-                name: SYNC_CONFIG.FILE_NAME,
-                mimeType: 'application/json',
-            };
-            const file = new Blob([JSON.stringify(localData)], { type: 'application/json' });
+            // Create new (Metadata then Content for reliability)
+            const metaResp = await gapi.client.drive.files.create({
+                resource: {
+                    name: SYNC_CONFIG.FILE_NAME,
+                    mimeType: 'application/json'
+                },
+                fields: 'id'
+            });
             
-            // Multipart upload logic simplified
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', file);
-
-            await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
-                body: form
+            const newFileId = metaResp.result.id;
+            await gapi.client.request({
+                path: `/upload/drive/v3/files/${newFileId}`,
+                method: 'PATCH',
+                params: { uploadType: 'media' },
+                body: JSON.stringify(localData)
             });
         }
         
@@ -275,8 +316,6 @@ async function performFullSync() {
         localStorage.setItem('yc_last_sync', Date.now());
     } catch (err) {
         console.error('Sync failed', err);
-        // Maybe token expired, don't alert spam in autoSync, just update UI
-        updateSyncUI('connected'); 
     } finally {
         isSyncing = false;
     }
@@ -286,7 +325,7 @@ let syncTimeout = null;
 
 // Auto-sync function to be called from data.js
 async function autoSync() {
-    if (!gapi.client || !gisInited) return;
+    if (!gapi.client || !gisInited || !isCloudSetupComplete) return;
 
     if (syncTimeout) clearTimeout(syncTimeout);
 

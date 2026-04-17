@@ -64,26 +64,19 @@
 
     <main class="mt-24 px-4 space-y-8">
         
-        <!-- Cloud Sync Card -->
-        <div id="sync-card" class="bg-slate-800/80 border border-slate-700/50 p-4 rounded-3xl flex items-center justify-between urdu-font">
+        <!-- Cloud Sync Card (Simplified) -->
+        <div id="sync-card" class="bg-slate-800/50 border border-slate-700/50 p-4 rounded-3xl flex items-center justify-between urdu-font">
             <div class="flex items-center gap-3">
-                <div id="sync-icon-bg" class="w-10 h-10 bg-slate-700 rounded-xl flex items-center justify-center">
-                    <span id="sync-icon" class="material-symbols-outlined text-slate-400">cloud_off</span>
+                <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
+                    <span id="sync-icon" class="material-symbols-outlined text-slate-500">cloud_off</span>
                 </div>
                 <div>
-                    <h3 class="text-xs font-bold text-slate-200">کلاؤڈ سنکنگ</h3>
+                    <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">کلاؤڈ بیک اپ</h3>
                     <p id="sync-status" class="text-[10px] text-slate-500">منسلک نہیں ہے</p>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <button id="sync-btn" onclick="handleSyncAuth()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">sync</span>
-                    منسلک کریں
-                </button>
-                <button onclick="restoreFromDrive()" class="bg-slate-800 hover:bg-slate-700 text-slate-400 px-3 py-2 rounded-full text-[10px] font-bold border border-slate-700 transition-all flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">cloud_download</span>
-                    ری سٹور
-                </button>
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-slate-800/50"></div>
             </div>
         </div>
 
@@ -221,6 +214,35 @@
             <span class="text-[8px] font-bold">ادھار</span>
         </a>
     </nav>
+
+    <!-- Initial Setup Overlay -->
+    <div id="setup-overlay" class="fixed inset-0 z-[200] bg-slate-900 flex flex-col items-center justify-center p-8 text-center hidden">
+        <div class="w-24 h-24 bg-amber-400 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-amber-400/20">
+            <span class="material-symbols-outlined text-slate-900 text-5xl">cloud_sync</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white mb-4 urdu-font">خوش آمدید!</h2>
+        <p class="text-slate-400 text-sm mb-12 urdu-font leading-relaxed">اپنا ڈیٹا محفوظ رکھنے اور اسے کلاؤڈ پر بیک اپ کرنے کے لیے براہ کرم اپنا گوگل اکاؤنٹ منسلک کریں۔</p>
+        <button onclick="handleSyncAuth()" class="w-full max-w-xs bg-amber-400 text-slate-900 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-amber-400/10 urdu-font">
+            <span class="material-symbols-outlined">link</span>
+            گوگل اکاؤنٹ منسلک کریں
+        </button>
+    </div>
+
+    <!-- Restore Choice Modal -->
+    <div id="restore-choice-modal" class="fixed inset-0 z-[210] modal-bg hidden flex items-center justify-center p-4 text-slate-100">
+        <div class="bg-slate-900 w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl border border-slate-800 animate-in zoom-in duration-300">
+            <div class="w-16 h-16 bg-amber-400/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-amber-400 text-3xl">restore</span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-4 urdu-font">پرانا ڈیٹا مل گیا ہے!</h3>
+            <p class="text-xs text-slate-400 mb-8 urdu-font leading-relaxed">گوگل ڈرائیو پر آپ کا بیک اپ موجود ہے۔ کیا آپ اسے واپس لانا چاہتے ہیں یا بالکل نیا کام شروع کرنا چاہتے ہیں؟</p>
+            
+            <div class="space-y-3">
+                <button onclick="restoreConfirmed()" class="w-full bg-amber-400 text-slate-900 py-4 rounded-2xl font-bold urdu-font">پرانا ڈیٹا واپس لائیں</button>
+                <button onclick="freshStartConfirmed()" class="w-full bg-slate-800 text-slate-400 py-4 rounded-2xl font-bold text-xs urdu-font">نیا کام شروع کریں</button>
+            </div>
+        </div>
+    </div>
 
     <script src="data.js"></script>
     <script src="sync.js"></script>
