@@ -167,6 +167,7 @@ const AppData = {
             };
             khata.push(newCust);
             localStorage.setItem('yc_khata', JSON.stringify(khata));
+            console.log("New customer added to Khata.");
             if (typeof autoSync === 'function') autoSync();
         }
     },
@@ -181,7 +182,11 @@ const AppData = {
         let khata = this.getKhata();
         khata = khata.filter(c => c.id !== id);
         localStorage.setItem('yc_khata', JSON.stringify(khata));
-        if (typeof autoSync === 'function') autoSync();
+        if (typeof autoSync === 'function') {
+            autoSync();
+        } else {
+            console.warn("AutoSync not ready for khata");
+        }
     },
 
     addSupplier(supplier) {
@@ -208,7 +213,11 @@ const AppData = {
         if (trimmedName && !cats.includes(trimmedName)) {
             cats.push(trimmedName);
             localStorage.setItem('yc_categories', JSON.stringify(cats));
-            if (typeof autoSync === 'function') autoSync();
+            if (typeof autoSync === 'function') {
+                autoSync();
+            } else {
+                console.warn("AutoSync not ready for categories");
+            }
         }
     },
 
@@ -223,7 +232,13 @@ const AppData = {
         let inv = this.getInventory();
         inv.push(item);
         localStorage.setItem('yc_inventory', JSON.stringify(inv));
-        if (typeof autoSync === 'function') autoSync();
+        // alert("Data.js: addInventory مکمل، اب سنک بلا رہا ہوں...");
+        if (typeof autoSync === 'function') {
+            autoSync();
+        } else {
+            alert("ایرر: سنک انجن (sync.js) لوڈ نہیں ہوا!");
+        }
+        return item;
     },
 
     updateInventory(updatedItem) {

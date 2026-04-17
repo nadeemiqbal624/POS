@@ -67,6 +67,7 @@ function checkSetupRequired() {
     const overlay = document.getElementById('setup-overlay');
     if (!overlay) return;
     
+    // If we have a token or cloud setup is complete, hide overlay
     if (gapi.client.getToken() || isCloudSetupComplete) {
         overlay.classList.add('hidden');
     } else {
@@ -357,20 +358,22 @@ let syncTimeout = null;
 
 // Auto-sync function to be called from data.js
 async function autoSync() {
-    // alert("Auto-sync trigger check..."); 
+    // alert("AutoSync: Step 1 - Triggered");
     if (!gapi.client || !gisInited || !isCloudSetupComplete) {
-        console.log("Sync return early", { gapi: !!gapi.client, gis: gisInited, setup: isCloudSetupComplete });
-        // Don't alert here to avoid spam, but let's add one for debugging
-        if (!isCloudSetupComplete) alert("نارنجی الرٹ: کلاؤڈ سیٹ اپ مکمل نہیں ہے!");
+        console.log("AutoSync: Blocked", { client: !!gapi.client, gis: gisInited, setup: isCloudSetupComplete });
+        if (!gapi.client) alert("Sync Error: GAPI لوڈ نہیں ہوا");
+        else if (!gisInited) alert("Sync Error: GIS لوڈ نہیں ہوا");
+        else if (!isCloudSetupComplete) alert("Sync Error: لاگ ان نہیں ہے");
         return;
     }
 
     if (syncTimeout) clearTimeout(syncTimeout);
     updateSyncUI('syncing');
 
+    // alert("AutoSync: Step 2 - Timeout set");
     syncTimeout = setTimeout(async () => {
         try {
-            alert("ٹائم آؤٹ شروع...");
+            alert("AutoSync: Step 3 - Timeout started");
             const token = gapi.client.getToken();
             alert("ٹوکن سٹیٹس: " + (token ? "اوکے" : "غائب"));
             

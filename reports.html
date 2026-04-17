@@ -39,6 +39,41 @@
             </button>
         </div>
     </header>
+    
+    <!-- Cloud Setup Overlay (Same as index.html) -->
+    <div id="setup-overlay" class="fixed inset-0 z-[200] bg-slate-900 flex flex-col items-center justify-center p-6 text-center hidden animate-in fade-in duration-500">
+        <div class="max-w-xs space-y-6">
+            <div class="w-20 h-20 bg-amber-400 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-amber-400/20">
+                <span class="material-symbols-outlined text-slate-900 text-4xl font-bold">cloud_sync</span>
+            </div>
+            <div class="space-y-2">
+                <h2 class="text-2xl font-bold text-white urdu-font">خوش آمدید!</h2>
+                <p class="text-slate-400 text-xs urdu-font leading-relaxed">اپنا ڈیٹا ہمیشہ کے لیے محفوظ رکھنے کے لیے اپنی جی میل (Gmail) منسلک کریں تاکہ آپ کا بیک اپ خود بخود ڈرائیو پر محفوظ رہے۔</p>
+            </div>
+            <button onclick="handleSyncAuth()" class="w-full bg-white text-slate-900 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-all">
+                <img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" class="w-6" alt="Google">
+                گوگل کے ساتھ لنک کریں
+            </button>
+            <p class="text-[10px] text-slate-500 urdu-font">آپ کا ڈیٹا مکمل طور پر محفوظ اور نجی رہے گا۔</p>
+        </div>
+    </div>
+
+    <!-- Restore Choice Modal -->
+    <div id="restore-choice-modal" class="fixed inset-0 z-[210] modal-bg hidden flex items-center justify-center p-6 text-center">
+        <div class="bg-slate-900 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 space-y-6 animate-in zoom-in-95 duration-300">
+            <div class="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto">
+                <span class="material-symbols-outlined text-3xl">download_done</span>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-xl font-bold text-white urdu-font">بیک اپ مل گیا ہے!</h3>
+                <p class="text-slate-400 text-xs urdu-font">ہمیں آپ کے گوگل ڈرائیو پر پرانا ڈیٹا ملا ہے۔ کیا آپ اسے واپس لانا چاہتے ہیں یا نیا کام شروع کرنا چاہتے ہیں؟</p>
+            </div>
+            <div class="grid grid-cols-1 gap-3">
+                <button onclick="restoreConfirmed()" class="w-full bg-emerald-500 text-white py-4 rounded-2xl font-bold urdu-font hover:bg-emerald-600 transition-all">پرانا ڈیٹا ری سٹور کریں</button>
+                <button onclick="freshStartConfirmed()" class="w-full bg-slate-800 text-slate-300 py-3 rounded-2xl font-bold text-xs urdu-font hover:bg-slate-700 transition-all">نئی شروعات کریں</button>
+            </div>
+        </div>
+    </div>
 
     <main class="mt-24 px-4 space-y-6">
 
