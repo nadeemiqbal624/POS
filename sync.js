@@ -169,7 +169,23 @@ async function restoreFromDrive() {
                 alt: 'media'
             });
             
-            const cloudData = fileResp.result;
+            let cloudData = fileResp.result;
+            
+            // Handle string response (common with alt: 'media')
+            if (typeof cloudData === 'string') {
+                try {
+                    cloudData = JSON.parse(cloudData);
+                } catch (e) {
+                    console.error("JSON parse error:", e);
+                    alert('کلاؤڈ ڈیٹا فارمیٹ درست نہیں ہے!');
+                    return;
+                }
+            }
+            
+            if (!cloudData || typeof cloudData !== 'object') {
+                alert('بیک اپ فائل خالی یا غیر موزوں ہے!');
+                return;
+            }
             
             // Apply to localStorage
             if (cloudData.inventory) localStorage.setItem('yc_inventory', JSON.stringify(cloudData.inventory));
