@@ -241,6 +241,20 @@ const AppData = {
         inv = inv.filter(i => i.id !== id);
         localStorage.setItem('yc_inventory', JSON.stringify(inv));
         if (typeof autoSync === 'function') autoSync();
+    },
+    
+    getNextItemId() {
+        const inv = this.getInventory();
+        if (!inv || inv.length === 0) return "1";
+        
+        const numericIds = inv
+            .map(item => parseInt(item.id))
+            .filter(id => !isNaN(id));
+            
+        if (numericIds.length === 0) return (inv.length + 1).toString();
+        
+        const maxId = Math.max(...numericIds);
+        return (maxId + 1).toString();
     }
 };
 

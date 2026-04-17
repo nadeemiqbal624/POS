@@ -67,7 +67,7 @@
         <div class="flex gap-2">
             <div class="relative flex-grow">
                 <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">search</span>
-                <input type="text" id="inventory-search" oninput="renderInventory()" placeholder="نام یا SKU تلاش کریں..." class="w-full pr-12 pl-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/50 shadow-inner focus:ring-2 focus:ring-amber-400/50 text-sm outline-none urdu-font">
+                <input type="text" id="inventory-search" oninput="renderInventory()" placeholder="نام یا نمبر تلاش کریں..." class="w-full pr-12 pl-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/50 shadow-inner focus:ring-2 focus:ring-amber-400/50 text-sm outline-none urdu-font">
             </div>
             <button class="bg-slate-800 p-3 rounded-xl border border-slate-700/50 flex items-center justify-center text-slate-400 hover:bg-slate-700 transition-all">
                 <span class="material-symbols-outlined">qr_code_scanner</span>
@@ -104,8 +104,8 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="text-[10px] text-slate-500 mr-2">کوڈ / SKU</label>
-                        <input type="text" id="item-id" required placeholder="BC-101" class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-amber-400/50 english-font">
+                        <label class="text-[10px] text-slate-500 mr-2">آئٹم نمبر</label>
+                        <input type="text" id="item-id" required readonly placeholder="0" class="w-full px-4 py-3 bg-slate-800/50 text-slate-400 rounded-xl border border-slate-700/30 text-xs outline-none english-font cursor-not-allowed">
                     </div>
                     <div class="space-y-1">
                         <label class="text-[10px] text-slate-500 mr-2">کیٹیگری</label>
@@ -299,7 +299,11 @@
             document.getElementById('modal-title').innerText = 'نیا آئٹم شامل کریں';
             document.getElementById('item-form').reset();
             document.getElementById('edit-id').value = '';
-            document.getElementById('item-id').disabled = false;
+            
+            // Auto-fill Item Number
+            const nextId = AppData.getNextItemId();
+            document.getElementById('item-id').value = nextId;
+            
             clearImagePreview();
             document.getElementById('item-modal').classList.remove('hidden');
         }
@@ -470,12 +474,6 @@
             if (editId) {
                 AppData.updateInventory(itemData);
             } else {
-                // Check if ID already exists
-                const existing = AppData.getInventory().find(i => i.id === itemData.id);
-                if (existing) {
-                    alert('یہ کوڈ (SKU) پہلے سے موجود ہے!');
-                    return;
-                }
                 AppData.addInventory(itemData);
             }
 

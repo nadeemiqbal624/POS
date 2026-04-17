@@ -93,7 +93,7 @@ async function handleSyncAuth() {
             expiry: Date.now() + (resp.expires_in * 1000)
         }));
         updateSyncUI('connected');
-        await performFullSync();
+        // Do NOT auto-sync on first link to avoid overwriting Drive data with empty local data
     };
 
     if (gapi.client.getToken() === null) {
@@ -118,11 +118,11 @@ function updateSyncUI(state) {
 
     if (state === 'connected') {
         btn.innerHTML = `<span class="material-symbols-outlined text-sm">sync</span> اپ ڈیٹ کریں`;
-        status.innerText = 'منسلک اور محفوظ';
+        status.innerText = 'منسلک (اپ ڈیٹ یا ری سٹور کریں)';
         status.classList.add('text-emerald-400');
         iconBg.classList.add('bg-emerald-500/20');
         icon.classList.add('text-emerald-400');
-        icon.innerText = 'cloud_done';
+        icon.innerText = 'cloud_queue';
     } else if (state === 'syncing') {
         status.innerText = 'سنک ہو رہا ہے...';
         status.classList.add('text-amber-400');
@@ -135,6 +135,12 @@ function updateSyncUI(state) {
         iconBg.classList.add('bg-amber-400/10');
         icon.classList.add('text-amber-400', 'animate-pulse');
         icon.innerText = 'cloud_upload';
+    } else if (state === 'synced') {
+        status.innerText = 'کلاؤڈ پر محفوظ ہے';
+        status.classList.add('text-emerald-400');
+        iconBg.classList.add('bg-emerald-500/20');
+        icon.classList.add('text-emerald-400');
+        icon.innerText = 'cloud_done';
     } else {
         status.innerText = 'منسلک نہیں ہے';
         status.classList.add('text-slate-500');
@@ -265,7 +271,7 @@ async function performFullSync() {
             });
         }
         
-        updateSyncUI('connected');
+        updateSyncUI('synced');
         localStorage.setItem('yc_last_sync', Date.now());
     } catch (err) {
         console.error('Sync failed', err);
