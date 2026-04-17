@@ -120,16 +120,15 @@ async function checkForExistingBackup() {
         });
         const files = response.result.files;
 
-        const isLocalEmpty = AppData.getInventory().length === 0 && AppData.getSales().length === 0;
-
-        if (files && files.length > 0 && isLocalEmpty) {
-            // Backup found and local is empty - Show choice
+        if (files && files.length > 0) {
+            // Backup found - ALWAYS ask the user
             showRestoreChoiceModal(files[0].id);
         } else {
-            // No backup or already has data - Just start syncing
+            // No backup exists - This is a completely new cloud user
             localStorage.setItem('yc_cloud_setup', 'true');
             isCloudSetupComplete = true;
             await performFullSync();
+            alert('کلاؤڈ بیک اپ شروع کر دیا گیا ہے! اب آپ کا ڈیٹا خود بخود محفوظ ہوتا رہے گا۔');
         }
     } catch (err) {
         console.error('Backup check failed', err);
@@ -222,14 +221,21 @@ async function restoreFromDrive(fileId) {
             alt: 'media'
         });
         
-        // Handle different gapi response structures
-        let cloudData = fileResp.result || fileResp.body;
+        // Debug: Log the raw response structure
+        console.log("Restore response:", fileResp);
+
+        let cloudData = fileResp.result;
         
+        // If result is empty or not what we want, look at body
+        if (!cloudData || (typeof cloudData === 'string' && cloudData.trim() === "")) {
+            cloudData = fileResp.body;
+        }
+
         if (typeof cloudData === 'string') {
             try {
                 cloudData = JSON.parse(cloudData);
             } catch (e) {
-                console.error("JSON parse error:", e);
+                console.error("JSON parse error from cloud data:", e);
                 alert('بیک اپ فائل کا فارمیٹ درست نہیں ہے!');
                 return;
             }
@@ -299,14 +305,17 @@ async function performFullSync() {
         if (files && files.length > 0) {
             const fileId = files[0].id;
             // Update existing using PATCH
-            await gapi.client.request({
+            const syncResp = await gapi.client.request({
                 path: `/upload/drive/v3/files/${fileId}`,
                 method: 'PATCH',
                 params: { uploadType: 'media' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(localData)
             });
+            
+            if (syncResp.status !== 200) throw new Error("Sync failed with status " + syncResp.status);
         } else {
-            // Create new (Metadata then Content for reliability)
+            // Create new
             const metaResp = await gapi.client.drive.files.create({
                 resource: {
                     name: SYNC_CONFIG.FILE_NAME,
@@ -316,18 +325,26 @@ async function performFullSync() {
             });
             
             const newFileId = metaResp.result.id;
-            await gapi.client.request({
+            const syncResp = await gapi.client.request({
                 path: `/upload/drive/v3/files/${newFileId}`,
                 method: 'PATCH',
                 params: { uploadType: 'media' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(localData)
             });
+
+            if (syncResp.status !== 200) throw new Error("Create Sync failed with status " + syncResp.status);
         }
         
         updateSyncUI('synced');
         localStorage.setItem('yc_last_sync', Date.now());
+        
+        console.log("Cloud backup updated successfully.");
+        // Success Alert with counts
+        alert(`بیک اپ مکمل ہو گیا ہے!\nآئٹمز: ${localData.inventory.length}\nسیلز: ${localData.sales.length}\nکھاتہ: ${localData.khata.length}`);
     } catch (err) {
         console.error('Sync failed', err);
+        updateSyncUI('connected');
     } finally {
         isSyncing = false;
     }
