@@ -296,17 +296,17 @@ async function performFullSync() {
     };
 
     try {
-        // alert("تلاش کر رہا ہوں...");
+        alert("تلاش کر رہا ہوں...");
         const response = await gapi.client.drive.files.list({
             q: `name = '${SYNC_CONFIG.FILE_NAME}' and trashed = false`,
             fields: 'files(id, name)',
         });
         const files = response.result.files;
-        // alert("فائلیں مل گئیں: " + files.length);
+        alert("فائلیں مل گئیں: " + files.length);
 
         if (files && files.length > 0) {
             const fileId = files[0].id;
-            // alert("موجودہ فائل اپ ڈیٹ کر رہا ہوں...");
+            alert("موجودہ فائل اپ ڈیٹ کر رہا ہوں...");
             const syncResp = await gapi.client.request({
                 path: `/upload/drive/v3/files/${fileId}`,
                 method: 'PATCH',
@@ -314,7 +314,7 @@ async function performFullSync() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(localData)
             });
-            // alert("PATCH مکمل: " + syncResp.status);
+            alert("PATCH مکمل: " + syncResp.status);
             if (syncResp.status !== 200) throw new Error("Sync failed with status " + syncResp.status);
         } else {
             // alert("نئی فائل بنا رہا ہوں...");
@@ -357,19 +357,34 @@ let syncTimeout = null;
 
 // Auto-sync function to be called from data.js
 async function autoSync() {
-    alert("Auto-sync trigger check..."); 
-    if (!gapi.client || !gisInited || !isCloudSetupComplete) return;
+    // alert("Auto-sync trigger check..."); 
+    if (!gapi.client || !gisInited || !isCloudSetupComplete) {
+        console.log("Sync return early", { gapi: !!gapi.client, gis: gisInited, setup: isCloudSetupComplete });
+        // Don't alert here to avoid spam, but let's add one for debugging
+        if (!isCloudSetupComplete) alert("نارنجی الرٹ: کلاؤڈ سیٹ اپ مکمل نہیں ہے!");
+        return;
+    }
 
     if (syncTimeout) clearTimeout(syncTimeout);
     updateSyncUI('syncing');
 
     syncTimeout = setTimeout(async () => {
-        const token = gapi.client.getToken();
-        if (!token) {
-            tokenClient.requestAccessToken({ prompt: '' });
-            return;
+        try {
+            alert("ٹائم آؤٹ شروع...");
+            const token = gapi.client.getToken();
+            alert("ٹوکن سٹیٹس: " + (token ? "اوکے" : "غائب"));
+            
+            if (!token) {
+                // alert("ٹوکن نہیں ہے، ریفریش کر رہا ہوں...");
+                tokenClient.requestAccessToken({ prompt: '' });
+                return;
+            }
+            
+            // alert("performFullSync کو بلا رہا ہوں...");
+            await performFullSync();
+        } catch (e) {
+            alert("سنک ایرر (Callback): " + e.message);
         }
-        await performFullSync();
     }, 1000); // 1 second delay for testing
 }
 
