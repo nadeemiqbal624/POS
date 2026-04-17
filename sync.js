@@ -345,6 +345,7 @@ async function performFullSync() {
     } catch (err) {
         console.error('Sync failed', err);
         updateSyncUI('connected');
+        alert('کلاؤڈ سنک فیل ہو گیا! براہ کرم انٹرنیٹ چیک کریں یا دوبارہ لنک کریں۔');
     } finally {
         isSyncing = false;
     }
@@ -354,37 +355,19 @@ let syncTimeout = null;
 
 // Auto-sync function to be called from data.js
 async function autoSync() {
+    alert("Auto-sync trigger check..."); 
     if (!gapi.client || !gisInited || !isCloudSetupComplete) return;
 
     if (syncTimeout) clearTimeout(syncTimeout);
-
-    updateSyncUI('pending'); // Show wait indicator
+    updateSyncUI('syncing');
 
     syncTimeout = setTimeout(async () => {
-        const currentToken = gapi.client.getToken();
-        
-        if (currentToken) {
-            await performFullSync();
-        } else if (!isAuthenticating) {
-            // Try to get token without prompt (silent)
-            isAuthenticating = true;
-            try {
-                tokenClient.callback = async (resp) => {
-                    isAuthenticating = false;
-                    if (resp.error !== undefined) return;
-                    // Save token locally
-                    localStorage.setItem('google_access_token', JSON.stringify({
-                        access_token: resp.access_token,
-                        expiry: Date.now() + (resp.expires_in * 1000)
-                    }));
-                    updateSyncUI('connected');
-                    await performFullSync();
-                };
-                tokenClient.requestAccessToken({ prompt: '' });
-            } catch (err) {
-                isAuthenticating = false;
-            }
+        const token = gapi.client.getToken();
+        if (!token) {
+            tokenClient.requestAccessToken({ prompt: '' });
+            return;
         }
-    }, 4000); // Wait 4 seconds after last change
+        await performFullSync();
+    }, 1000); // 1 second delay for testing
 }
 
