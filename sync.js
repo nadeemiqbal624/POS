@@ -303,17 +303,17 @@ async function performFullSync() {
     };
 
     try {
-        alert("تلاش کر رہا ہوں...");
+        // console.log("Searching for backup...");
         const response = await gapi.client.drive.files.list({
             q: `name = '${SYNC_CONFIG.FILE_NAME}' and trashed = false`,
             fields: 'files(id, name)',
         });
         const files = response.result.files;
-        alert("فائلیں مل گئیں: " + files.length);
+        // console.log("Files found:", files.length);
 
         if (files && files.length > 0) {
             const fileId = files[0].id;
-            alert("موجودہ فائل اپ ڈیٹ کر رہا ہوں...");
+            // console.log("Updating existing file...");
             const syncResp = await gapi.client.request({
                 path: `/upload/drive/v3/files/${fileId}`,
                 method: 'PATCH',
@@ -321,7 +321,7 @@ async function performFullSync() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(localData)
             });
-            alert("PATCH مکمل: " + syncResp.status);
+            // console.log("PATCH status:", syncResp.status);
             if (syncResp.status !== 200) throw new Error("Sync failed with status " + syncResp.status);
         } else {
             // alert("نئی فائل بنا رہا ہوں...");
@@ -350,7 +350,7 @@ async function performFullSync() {
         updateSyncUI('synced');
         localStorage.setItem('yc_last_sync', Date.now());
         
-        alert(`بیک اپ مکمل!\nآئٹمز: ${localData.inventory.length}\nسیلز: ${localData.sales.length}`);
+        // alert(`بیک اپ مکمل!\nآئٹمز: ${localData.inventory.length}\nسیلز: ${localData.sales.length}`);
     } catch (err) {
         console.error('Sync failed', err);
         updateSyncUI('connected');
