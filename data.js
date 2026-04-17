@@ -232,7 +232,7 @@ const AppData = {
         let inv = this.getInventory();
         inv.push(item);
         localStorage.setItem('yc_inventory', JSON.stringify(inv));
-        // alert("Data.js: addInventory مکمل، اب سنک بلا رہا ہوں...");
+        alert("Data.js: addInventory مکمل، اب سنک بلا رہا ہوں...");
         if (typeof autoSync === 'function') {
             autoSync();
         } else {

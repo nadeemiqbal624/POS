@@ -65,13 +65,19 @@ function checkSyncStatus() {
 
 function checkSetupRequired() {
     const overlay = document.getElementById('setup-overlay');
-    if (!overlay) return;
+    const relinkBtn = document.getElementById('relink-btn');
+    const hasToken = gapi.client && gapi.client.getToken();
     
-    // If we have a token or cloud setup is complete, hide overlay
-    if (gapi.client.getToken() || isCloudSetupComplete) {
-        overlay.classList.add('hidden');
-    } else {
-        overlay.classList.remove('hidden');
+    // Hide overlay if token exists OR setup marked complete
+    if (overlay) {
+        if (hasToken || isCloudSetupComplete) overlay.classList.add('hidden');
+        else overlay.classList.remove('hidden');
+    }
+    
+    // Show relink button only if NO token
+    if (relinkBtn) {
+        if (hasToken) relinkBtn.classList.add('hidden');
+        else relinkBtn.classList.remove('hidden');
     }
 }
 
@@ -358,7 +364,7 @@ let syncTimeout = null;
 
 // Auto-sync function to be called from data.js
 async function autoSync() {
-    // alert("AutoSync: Step 1 - Triggered");
+    alert("AutoSync: Step 1 - Triggered");
     if (!gapi.client || !gisInited || !isCloudSetupComplete) {
         console.log("AutoSync: Blocked", { client: !!gapi.client, gis: gisInited, setup: isCloudSetupComplete });
         if (!gapi.client) alert("Sync Error: GAPI لوڈ نہیں ہوا");
@@ -370,7 +376,7 @@ async function autoSync() {
     if (syncTimeout) clearTimeout(syncTimeout);
     updateSyncUI('syncing');
 
-    // alert("AutoSync: Step 2 - Timeout set");
+    alert("AutoSync: Step 2 - Timeout set");
     syncTimeout = setTimeout(async () => {
         try {
             alert("AutoSync: Step 3 - Timeout started");

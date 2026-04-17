@@ -68,11 +68,14 @@
         <div id="sync-card" class="bg-slate-800/50 border border-slate-700/50 p-4 rounded-3xl flex items-center justify-between urdu-font">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
-                    <span id="sync-icon" class="material-symbols-outlined text-slate-500">cloud_off</span>
+                    <span id="sync-icon" class="material-symbols-outlined text-slate-500 cursor-pointer" onclick="autoSync()">cloud_off</span>
                 </div>
                 <div>
                     <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">کلاؤڈ بیک اپ</h3>
-                    <p id="sync-status" class="text-[10px] text-slate-500">منسلک نہیں ہے</p>
+                    <div class="flex items-center gap-2">
+                        <p id="sync-status" class="text-[10px] text-slate-500">منسلک نہیں ہے</p>
+                        <button id="relink-btn" onclick="handleSyncAuth()" class="text-[8px] text-amber-400 underline">لنک کریں</button>
+                    </div>
                 </div>
             </div>
             <div class="flex items-center gap-2">
