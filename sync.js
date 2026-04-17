@@ -366,6 +366,10 @@ let syncTimeout = null;
 // Auto-sync function to be called from data.js
 async function autoSync() {
     alert("AutoSync: Step 1 - Triggered");
+    if (typeof gapi === 'undefined') {
+        alert("Sync Error: گوگل سروسز لوڈ نہیں ہوئیں!");
+        return;
+    }
     if (!gapi.client || !gisInited || !isCloudSetupComplete) {
         console.log("AutoSync: Blocked", { client: !!gapi.client, gis: gisInited, setup: isCloudSetupComplete });
         if (!gapi.client) alert("Sync Error: GAPI لوڈ نہیں ہوا");

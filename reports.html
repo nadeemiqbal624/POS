@@ -31,6 +31,10 @@
             <h1 id="store-name-display" class="text-xl font-bold text-white urdu-font">مالیاتی رپورٹس</h1>
         </div>
         <div class="flex items-center gap-2">
+            <div class="flex flex-col items-end mr-2">
+                <div id="sync-status" class="text-[9px] text-slate-500 font-bold urdu-font"></div>
+            </div>
+            <span id="sync-icon" class="material-symbols-outlined text-slate-500 text-sm cursor-pointer hover:text-amber-400" onclick="autoSync()">sync</span>
             <button onclick="toggleStockValuation()" class="text-slate-500 hover:text-amber-400 transition-colors p-2" title="اسٹاک کی مالیت">
                 <span class="material-symbols-outlined">inventory</span>
             </button>
@@ -221,7 +225,10 @@
         </a>
     </nav>
 
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
     <script src="data.js"></script>
+    <script src="sync.js"></script>
     <script src="ui.js"></script>
     <script>
         let currentTab = 'sales';
