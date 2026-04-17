@@ -374,25 +374,27 @@ async function autoSync() {
         return;
     }
 
-    if (syncTimeout) clearTimeout(syncTimeout);
-    updateSyncUI('syncing');
-
-    alert("AutoSync: Step 2 - Timeout set");
-    syncTimeout = setTimeout(() => {
-        // Run logic in a self-executing async block
-        (async () => {
-            try {
-                alert("AutoSync: Step 3 - Cloud logic started");
-                const token = gapi.client.getToken();
-                if (!token) {
-                    tokenClient.requestAccessToken({ prompt: '' });
-                    return;
-                }
-                await performFullSync();
-            } catch (e) {
-                alert("AutoSync Error: " + e.message);
+    alert("AutoSync: Step 2 - Setting Timeout");
+    try {
+        updateSyncUI('syncing');
+    } catch(e) {
+        console.error("UI update failed", e);
+    }
+    syncTimeout = setTimeout(async function() {
+        alert("AutoSync: Step 3 - Logic starting...");
+        try {
+            if (!gapi.client) { alert("Error: GAPI client missing!"); return; }
+            const token = gapi.client.getToken();
+            alert("AutoSync: Step 4 - Token is " + (token ? "OK" : "MISSING"));
+            
+            if (!token) {
+                tokenClient.requestAccessToken({ prompt: '' });
+                return;
             }
-        })();
-    }, 1000);
+            await performFullSync();
+        } catch (e) {
+            alert("AutoSync Callback Error: " + e.message);
+        }
+    }, 1500);
 }
 
