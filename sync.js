@@ -155,11 +155,10 @@ function showRestoreChoiceModal(fileId) {
 
 async function restoreConfirmed(fileId) {
     fileId = fileId || window._pendingFileId;
-    await restoreFromDrive(fileId);
+    // Set flag first so it survives the reload inside restoreFromDrive
     localStorage.setItem('yc_cloud_setup', 'true');
     isCloudSetupComplete = true;
-    const modal = document.getElementById('restore-choice-modal');
-    if (modal) modal.classList.add('hidden');
+    await restoreFromDrive(fileId);
 }
 
 async function freshStartConfirmed() {
@@ -243,17 +242,30 @@ async function restoreFromDrive(fileId) {
         
         // Apply to localStorage
         const keys = ['inventory', 'sales', 'khata', 'suppliers', 'categories', 'profile', 'expenses'];
+        let restoredCount = 0;
+        let details = "بیک اپ میں درج ذیل ڈیٹا ملا:\n";
+        
         keys.forEach(key => {
             if (cloudData[key]) {
-                localStorage.setItem(`yc_${key}`, JSON.stringify(cloudData[key]));
+                const data = cloudData[key];
+                localStorage.setItem(`yc_${key}`, JSON.stringify(data));
+                restoredCount++;
+                if (Array.isArray(data)) {
+                    details += `✅ ${key}: ${data.length} آئٹمز\n`;
+                } else {
+                    details += `✅ ${key}: معلومات مل گئی ہیں\n`;
+                }
+            } else {
+                details += `❌ ${key}: نہیں ملا\n`;
             }
         });
 
-        alert('ڈیٹا کامیابی سے واپس آ گیا ہے!');
+        alert(details);
+        alert('ایپ اب ری لوڈ ہوگی اور ڈیٹا نظر آ جائے گا۔');
         location.reload();
     } catch (err) {
         console.error('Restore failed', err);
-        alert('واپسی کے عمل میں خرابی پیش آئی!');
+        alert('واپسی کے عمل میں خرابی پیش آئی: ' + (err.message || 'Unknown error'));
     } finally {
         updateSyncUI('synced');
     }
