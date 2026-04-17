@@ -3,6 +3,8 @@
  * Handles localStorage persistence for Inventory, Sales, and Khata.
  */
 
+alert("Data.js Loaded Successfully");
+
 const AppData = {
     // Initial Data (Empty for production)
     initialInventory: [],

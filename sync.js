@@ -9,6 +9,7 @@ const SYNC_CONFIG = {
     DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
     FILE_NAME: 'pos_backup_yc.json'
 };
+alert("Sync.js Loaded Successfully");
 
 let tokenClient;
 let gapiInited = false;
@@ -377,23 +378,21 @@ async function autoSync() {
     updateSyncUI('syncing');
 
     alert("AutoSync: Step 2 - Timeout set");
-    syncTimeout = setTimeout(async () => {
-        try {
-            alert("AutoSync: Step 3 - Timeout started");
-            const token = gapi.client.getToken();
-            alert("ٹوکن سٹیٹس: " + (token ? "اوکے" : "غائب"));
-            
-            if (!token) {
-                // alert("ٹوکن نہیں ہے، ریفریش کر رہا ہوں...");
-                tokenClient.requestAccessToken({ prompt: '' });
-                return;
+    syncTimeout = setTimeout(() => {
+        // Run logic in a self-executing async block
+        (async () => {
+            try {
+                alert("AutoSync: Step 3 - Cloud logic started");
+                const token = gapi.client.getToken();
+                if (!token) {
+                    tokenClient.requestAccessToken({ prompt: '' });
+                    return;
+                }
+                await performFullSync();
+            } catch (e) {
+                alert("AutoSync Error: " + e.message);
             }
-            
-            // alert("performFullSync کو بلا رہا ہوں...");
-            await performFullSync();
-        } catch (e) {
-            alert("سنک ایرر (Callback): " + e.message);
-        }
-    }, 1000); // 1 second delay for testing
+        })();
+    }, 1000);
 }
 
