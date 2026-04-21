@@ -139,9 +139,14 @@
             </div>
             
             <form onsubmit="saveCustomer(event)" class="space-y-4 urdu-font">
-                <div class="space-y-1">
+                <div class="space-y-1 relative">
                     <label class="text-[10px] text-slate-500">کسٹمر کا نام</label>
-                    <input type="text" id="cust-name" required placeholder="نام درج کریں..." class="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-blue-400/50">
+                    <div class="relative">
+                        <input type="text" id="cust-name" required placeholder="نام درج کریں..." class="w-full pl-12 pr-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700/30 text-xs outline-none focus:ring-2 focus:ring-blue-400/50">
+                        <button type="button" onclick="UI.openContactPicker('cust-name', 'cust-phone')" class="absolute left-2 top-1/2 -translate-y-1/2 bg-blue-500/10 text-blue-400 p-1.5 rounded-lg hover:bg-blue-500 hover:text-white transition-colors z-10" title="موبائل کنٹیکٹس سے شامل کریں">
+                            <span class="material-symbols-outlined text-[16px]">contact_phone</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] text-slate-500">فون نمبر</label>
@@ -318,7 +323,13 @@
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-full ${customer.balance === 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-400'} flex items-center justify-center font-bold english-font border border-current opacity-70">${initials}</div>
                             <div>
-                                <h4 class="font-bold text-sm text-slate-200">${customer.name}</h4>
+                                <h4 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+                                    ${customer.name}
+                                    <button onclick="promptEditPhone('${customer.name}')" class="text-slate-500 hover:text-amber-400 transition-colors" title="نمبر اپڈیٹ کریں">
+                                        <span class="material-symbols-outlined text-[14px]">edit</span>
+                                    </button>
+                                </h4>
+                                <p class="text-[10px] text-slate-500 italic english-font">${customer.phone || 'نمبر موجود نہیں'}</p>
                                 <p class="text-[10px] text-slate-500 italic">آخری ادائیگی: ${customer.lastPay}</p>
                             </div>
                         </div>
@@ -340,6 +351,23 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function promptEditPhone(name) {
+            const khata = AppData.getKhata();
+            const customer = khata.find(c => c.name === name);
+            if (!customer) return;
+            
+            const newNum = prompt(`نیا فون نمبر درج کریں (کسٹمر: ${name})`, customer.phone || '');
+            if (newNum !== null) {
+                let cIndex = khata.findIndex(c => c.name === name);
+                if (cIndex !== -1) {
+                    khata[cIndex].phone = newNum.trim();
+                    localStorage.setItem('yc_khata', JSON.stringify(khata));
+                    if (typeof autoSync === 'function') autoSync();
+                    renderKhata();
+                }
+            }
         }
 
         function showAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
@@ -445,7 +473,23 @@
             msg += `\nشکریہ!`;
 
             const phone = (customer.phone || '').replace(/\D/g, '');
-            const url = `https://wa.me/${phone.startsWith('92') ? phone : '92' + phone}?text=${encodeURIComponent(msg)}`;
+            if (phone.length < 10) {
+                const newNum = prompt("اس کسٹمر کا درست اور مکمل فون نمبر موجود نہیں ہے۔\nبراہ کرم نیا فون نمبر درج کریں تاکہ ہم محفوظ کر سکیں:");
+                if (newNum !== null && newNum.trim().length >= 10) {
+                    let khata = AppData.getKhata();
+                    let cIndex = khata.findIndex(c => c.name === customer.name);
+                    if (cIndex !== -1) {
+                        khata[cIndex].phone = newNum.trim();
+                        localStorage.setItem('yc_khata', JSON.stringify(khata));
+                        if (typeof autoSync === 'function') autoSync();
+                        customer.phone = newNum.trim();
+                        // Re-run the share function with new phone
+                        return shareKhataWhatsApp(name);
+                    }
+                }
+                return; // User cancelled or entered invalid number
+            }
+            const url = `https://wa.me/${phone.startsWith('92') ? phone : '92' + (phone.startsWith('0') ? phone.substring(1) : phone)}?text=${encodeURIComponent(msg)}`;
             window.open(url, '_blank');
         }
 

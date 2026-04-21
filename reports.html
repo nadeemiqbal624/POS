@@ -175,6 +175,14 @@
                         <span class="text-white font-bold">کل رقم:</span>
                         <span id="detail-total" class="text-xl font-bold english-font text-amber-400"></span>
                     </div>
+                    <div id="detail-paid-row" class="flex justify-between items-center text-xs text-emerald-400 hidden">
+                        <span>وصول شدہ (Paid):</span>
+                        <span id="detail-paid" class="english-font"></span>
+                    </div>
+                    <div id="detail-due-row" class="flex justify-between items-center text-xs text-rose-400 hidden">
+                        <span>باقی رقم (Balance):</span>
+                        <span id="detail-due" class="english-font"></span>
+                    </div>
                     <div class="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-slate-800/50">
                         <span id="detail-customer"></span>
                         <span id="detail-date" class="english-font"></span>
@@ -417,6 +425,24 @@
             }
 
             document.getElementById('detail-total').innerText = `Rs. ${(sale.total || 0).toLocaleString()}`;
+            
+            // Paid and Due
+            const paidRow = document.getElementById('detail-paid-row');
+            const dueRow = document.getElementById('detail-due-row');
+            if (sale.paidAmount !== undefined) {
+                paidRow.classList.remove('hidden');
+                document.getElementById('detail-paid').innerText = `Rs. ${sale.paidAmount.toLocaleString()}`;
+                if (sale.dueAmount > 0) {
+                    dueRow.classList.remove('hidden');
+                    document.getElementById('detail-due').innerText = `Rs. ${sale.dueAmount.toLocaleString()}`;
+                } else {
+                    dueRow.classList.add('hidden');
+                }
+            } else {
+                paidRow.classList.add('hidden');
+                dueRow.classList.add('hidden');
+            }
+
             document.getElementById('detail-customer').innerText = `کسٹمر: ${sale.customer}`;
             document.getElementById('detail-date').innerText = sale.date;
 

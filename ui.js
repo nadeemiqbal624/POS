@@ -191,6 +191,37 @@ const UI = {
         this.highlightNav();
         this.updateStoreHeader();
         this.setupPWA();
+    },
+
+    /**
+     * Opens the native contact picker
+     */
+    async openContactPicker(nameFieldId, phoneFieldId) {
+        if (!('contacts' in navigator && 'ContactsManager' in window)) {
+            alert('آپ کا براؤزر کنٹیکٹس ڈائریکٹ امپورٹ کرنے کو سپورٹ نہیں کرتا۔ آپ کو نمبر خود سے لکھنا ہوگا۔');
+            return;
+        }
+        try {
+            const props = ['name', 'tel'];
+            const opts = { multiple: false };
+            const contacts = await navigator.contacts.select(props, opts);
+            if (contacts.length > 0) {
+                const c = contacts[0];
+                if (c.name && c.name.length > 0 && nameFieldId) {
+                    const nameEl = document.getElementById(nameFieldId);
+                    if(nameEl && !nameEl.value) nameEl.value = c.name[0];
+                }
+                if (c.tel && c.tel.length > 0 && phoneFieldId) {
+                    const phoneEl = document.getElementById(phoneFieldId);
+                    if(phoneEl) {
+                        let phone = c.tel[0].replace(/\s+/g, '').replace(/[^0-9+]/g, '');
+                        phoneEl.value = phone;
+                    }
+                }
+            }
+        } catch (ex) {
+            console.error(ex);
+        }
     }
 };
 

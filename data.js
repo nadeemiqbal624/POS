@@ -124,12 +124,14 @@ const AppData = {
         return JSON.parse(localStorage.getItem('yc_khata'));
     },
 
-    updateKhata(name, amount, type = 'Payment', details = 'نقد وصولی') {
+    updateKhata(name, amount, type = 'Payment', details = 'نقد وصولی', phone = '') {
         let khata = this.getKhata();
         let customer = khata.find(c => c.name === name);
         if (customer) {
             if (!customer.transactions) customer.transactions = [];
             
+            if (phone) customer.phone = phone;
+
             // Update balance
             if (type === 'Purchase') {
                 customer.balance += amount;
@@ -155,6 +157,7 @@ const AppData = {
             const newCust = {
                 id: Date.now(),
                 name: name,
+                phone: phone,
                 balance: amount > 0 ? amount : 0,
                 lastPay: 'کبھی نہیں',
                 transactions: amount > 0 ? [{
